@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getSession, clearSession } from '../services/session';
 import { getBalance, resolveAccount } from '../services/accounts';
 import { getPaymentHistory, getPaymentStats, sendPayment } from '../services/payments';
-import { getWorkerReviews } from '../services/reviews';
+import { getWorkerReviews, getEligibleReviewees, submitReview, getReviewsFor, getUserRating } from '../services/reviews';
 import { getWorkerSchedules, createClaim, getWorkerClaims } from '../services/schedules';
-import type { PaymentRecord, PaymentStats, ReviewData, BalanceItem, SendPaymentResponse, ResolveResponse, Schedule, PaymentClaim } from '../types';
+import type { PaymentRecord, PaymentStats, ReviewData, BalanceItem, SendPaymentResponse, ResolveResponse, Schedule, PaymentClaim, EligibleReviewee, UserReview, UserRating } from '../types';
 
 
 export default function WorkerDashboard() {
@@ -194,6 +194,66 @@ export default function WorkerDashboard() {
         }
     };
 
+    // ── Reviews state (app-based) ──────────────────────────────────
+    const [eligibleReviewees, setEligibleReviewees] = useState<EligibleReviewee[]>([]);
+    const [receivedReviews, setReceivedReviews] = useState<UserReview[]>([]);
+    const [myRating, setMyRating] = useState<UserRating>({ avg_rating: 0, count: 0 });
+    const [reviewTarget, setReviewTarget] = useState<EligibleReviewee | null>(null);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState('');
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [reviewFeedback, setReviewFeedback] = useState('');
+
+    useEffect(() => {
+        if (!session?.worker_id) return;
+        let cancelled = false;
+        async function load() {
+            try {
+                const [e, r, rt] = await Promise.allSettled([
+                    getEligibleReviewees(session!.worker_id),
+                    getReviewsFor(session!.worker_id),
+                    getUserRating(session!.worker_id),
+                ]);
+                if (cancelled) return;
+                if (e.status === 'fulfilled') setEligibleReviewees(e.value);
+                if (r.status === 'fulfilled') setReceivedReviews(r.value);
+                if (rt.status === 'fulfilled') setMyRating(rt.value);
+            } catch { /* best-effort */ }
+        }
+        load();
+        return () => { cancelled = true; };
+    }, [session?.worker_id]);
+
+    const handleSubmitReview = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!session?.worker_id || !reviewTarget) return;
+        setReviewSubmitting(true);
+        setReviewFeedback('');
+        try {
+            await submitReview({
+                reviewer_id: session.worker_id,
+                reviewee_id: reviewTarget.reviewee_id,
+                rating: reviewRating,
+                comment: reviewComment,
+                schedule_id: reviewTarget.schedule_id,
+            });
+            setEligibleReviewees(prev => prev.filter(
+                er => !(er.reviewee_id === reviewTarget.reviewee_id && er.schedule_id === reviewTarget.schedule_id)
+            ));
+            setReviewFeedback(`Review submitted for ${reviewTarget.reviewee_name || reviewTarget.reviewee_id}!`);
+            setReviewTarget(null);
+            setReviewRating(5);
+            setReviewComment('');
+            getReviewsFor(session.worker_id).then(setReceivedReviews).catch(() => {});
+            getUserRating(session.worker_id).then(setMyRating).catch(() => {});
+        } catch (err: unknown) {
+            setReviewFeedback(err instanceof Error ? err.message : 'Failed to submit review.');
+        } finally {
+            setReviewSubmitting(false);
+            setTimeout(() => setReviewFeedback(''), 5000);
+        }
+    };
+
     // ── Helpers ─────────────────────────────────────────────────────
     const _ = stats;
     void _; void balances; void loadingData;
@@ -256,7 +316,12 @@ export default function WorkerDashboard() {
                         >
                             <span className="material-icons-outlined text-2xl mr-3">star_rate</span>
                             <span className="font-medium">Reviews</span>
-                            {showReviewNotification && (
+                            {eligibleReviewees.length > 0 && (
+                                <span className="ml-auto px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-bold">
+                                    {eligibleReviewees.length}
+                                </span>
+                            )}
+                            {showReviewNotification && eligibleReviewees.length === 0 && (
                                 <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
                             )}
                         </button>
@@ -853,67 +918,214 @@ export default function WorkerDashboard() {
                         )
                     }
 
-                    {
-                        activeTab === 'reviews' && (
-                            <div className="space-y-6">
-                                <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden">
-                                    <div className="p-6 border-b border-border-light dark:border-border-dark flex items-center justify-between bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-800/30">
-                                        <div>
-                                            <h3 className="font-bold text-xl text-slate-900 dark:text-white flex items-center gap-2">
-                                                My Reviews
-                                                <span className="px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs font-bold border border-yellow-200 dark:border-yellow-700/50">4.8 Average</span>
-                                            </h3>
-                                            <p className="text-secondary dark:text-slate-400 text-sm mt-1">What employers are saying about your work</p>
-                                        </div>
-                                        <button className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium shadow-lg shadow-blue-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                                            <span className="material-icons-outlined text-sm">share</span>
-                                            Share Profile
-                                        </button>
+                    {activeTab === 'reviews' && (
+                        <div className="space-y-8 max-w-4xl">
+                            {/* My Rating */}
+                            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark p-6 shadow-sm">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 flex items-center justify-center">
+                                        <span className="material-icons-outlined text-3xl">star</span>
                                     </div>
-                                    <div className="divide-y divide-border-light dark:divide-border-dark">
-                                        {reviews.length === 0 && (
-                                            <div className="p-8 text-center text-secondary dark:text-slate-400 text-sm">
-                                                No reviews yet.
-                                            </div>
-                                        )}
-                                        {reviews.map((review, idx) => (
-                                            <div key={idx} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                                                <div className="flex items-start gap-4">
-                                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md">
-                                                        {review.reviewer_type.slice(0, 2).toUpperCase()}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center justify-between mb-1">
-                                                            <h4 className="font-semibold text-slate-900 dark:text-white capitalize">{review.role} – {review.reviewer_type}</h4>
-                                                            <span className="text-xs text-secondary dark:text-slate-500">{review.duration_months}mo</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1 mb-2">
-                                                            {[...Array(5)].map((_, i) => (
-                                                                <span key={i} className={`material-icons-outlined text-[16px] ${i < review.rating ? 'text-yellow-400' : 'text-slate-300 dark:text-slate-600'}`}>star</span>
-                                                            ))}
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-xs text-slate-500">
-                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 font-mono">{review.stellar_asset}</span>
-                                                            <span className={`capitalize ${review.status === 'claimable' ? 'text-yellow-600' : 'text-green-600'}`}>{review.status}</span>
-                                                            {review.pdf_url && (
-                                                                <a href={review.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">PDF</a>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 text-center border-t border-border-light dark:border-border-dark">
-                                        <button className="text-primary hover:text-primary-dark font-medium text-sm flex items-center justify-center gap-1">
-                                            View all reviews
-                                            <span className="material-icons-outlined text-sm">arrow_forward</span>
-                                        </button>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                                            {myRating.count > 0 ? myRating.avg_rating.toFixed(1) : '—'}
+                                            <span className="text-base font-normal text-slate-400 ml-1">/ 5</span>
+                                        </h3>
+                                        <p className="text-sm text-secondary dark:text-slate-400">
+                                            {myRating.count > 0 ? `Based on ${myRating.count} review${myRating.count !== 1 ? 's' : ''}` : 'No reviews received yet'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-                        )
-                    }
+
+                            {/* Review Feedback */}
+                            {reviewFeedback && (
+                                <div className={`px-4 py-3 rounded-lg text-sm font-medium ${
+                                    reviewFeedback.toLowerCase().includes('fail') || reviewFeedback.toLowerCase().includes('error')
+                                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600'
+                                        : 'bg-green-50 dark:bg-green-900/20 text-green-600'
+                                }`}>
+                                    {reviewFeedback}
+                                </div>
+                            )}
+
+                            {/* Write a Review for Employers */}
+                            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm">
+                                <div className="p-6 border-b border-border-light dark:border-border-dark">
+                                    <h3 className="font-semibold text-slate-800 dark:text-white">Review Your Employers</h3>
+                                    <p className="text-sm text-secondary dark:text-slate-400 mt-1">
+                                        You can review employers who have had a payment schedule with you for 3+ months
+                                    </p>
+                                </div>
+                                {eligibleReviewees.length === 0 && !reviewTarget && (
+                                    <div className="p-8 text-center text-secondary dark:text-slate-400 text-sm">
+                                        <span className="material-icons-outlined text-4xl text-slate-300 dark:text-slate-600 block mb-2">hourglass_empty</span>
+                                        No employers eligible for review yet. Reviews unlock after 3 months of a payment schedule.
+                                    </div>
+                                )}
+                                {eligibleReviewees.length > 0 && !reviewTarget && (
+                                    <div className="divide-y divide-border-light dark:divide-border-dark">
+                                        {eligibleReviewees.map((er) => (
+                                            <div key={`${er.reviewee_id}-${er.schedule_id}`} className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs font-mono">
+                                                        {er.reviewee_id.slice(0, 6)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-medium text-slate-900 dark:text-white text-sm">
+                                                            {er.reviewee_name || er.reviewee_id}
+                                                        </p>
+                                                        <p className="text-xs text-secondary dark:text-slate-500">
+                                                            <span className="font-mono">{er.reviewee_id}</span> · Since {new Date(er.relationship_since).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => setReviewTarget(er)}
+                                                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                                                >
+                                                    <span className="material-icons-outlined text-sm">rate_review</span>
+                                                    Write Review
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                {reviewTarget && (
+                                    <form onSubmit={handleSubmitReview} className="p-6 space-y-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs font-mono">
+                                                {reviewTarget.reviewee_id.slice(0, 6)}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-slate-900 dark:text-white text-sm">
+                                                    Reviewing: {reviewTarget.reviewee_name || reviewTarget.reviewee_id}
+                                                </p>
+                                                <p className="text-xs text-secondary dark:text-slate-500 font-mono">{reviewTarget.reviewee_id}</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setReviewTarget(null)}
+                                                className="ml-auto text-slate-400 hover:text-red-500 transition-colors"
+                                            >
+                                                <span className="material-icons-outlined">close</span>
+                                            </button>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">Rating</label>
+                                            <div className="flex items-center gap-1">
+                                                {[1, 2, 3, 4, 5].map((star) => (
+                                                    <button
+                                                        key={star}
+                                                        type="button"
+                                                        onClick={() => setReviewRating(star)}
+                                                        className="focus:outline-none transition-transform hover:scale-110"
+                                                    >
+                                                        <span className={`material-icons-outlined text-3xl ${
+                                                            star <= reviewRating ? 'text-yellow-400' : 'text-slate-300 dark:text-slate-600'
+                                                        }`}>star</span>
+                                                    </button>
+                                                ))}
+                                                <span className="ml-2 text-sm font-medium text-slate-600 dark:text-slate-300">{reviewRating}/5</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">Comment (optional)</label>
+                                            <textarea
+                                                value={reviewComment}
+                                                onChange={(e) => setReviewComment(e.target.value)}
+                                                maxLength={500}
+                                                rows={3}
+                                                className="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                                                placeholder="Share your experience working with this employer..."
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={reviewSubmitting}
+                                            className="px-6 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg shadow transition-colors disabled:opacity-60 flex items-center gap-2"
+                                        >
+                                            {reviewSubmitting ? (
+                                                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                            ) : (
+                                                <span className="material-icons-outlined text-sm">send</span>
+                                            )}
+                                            Submit Review
+                                        </button>
+                                    </form>
+                                )}
+                            </div>
+
+                            {/* Received Reviews */}
+                            <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden">
+                                <div className="p-6 border-b border-border-light dark:border-border-dark">
+                                    <h3 className="font-semibold text-slate-800 dark:text-white">Reviews About You</h3>
+                                    <p className="text-secondary dark:text-slate-400 text-sm mt-1">What employers are saying about your work</p>
+                                </div>
+                                <div className="divide-y divide-border-light dark:divide-border-dark">
+                                    {receivedReviews.length === 0 && reviews.length === 0 && (
+                                        <div className="p-8 text-center text-secondary dark:text-slate-400 text-sm">
+                                            No reviews received yet.
+                                        </div>
+                                    )}
+                                    {/* App-based reviews */}
+                                    {receivedReviews.map((review) => (
+                                        <div key={review.review_id} className="p-5">
+                                            <div className="flex items-start gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                                                    {(review.reviewer_name || review.reviewer_id).slice(0, 2).toUpperCase()}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                                                            {review.reviewer_name || review.reviewer_id}
+                                                        </p>
+                                                        <span className="text-xs text-slate-400">{new Date(review.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-0.5 mb-2">
+                                                        {[1, 2, 3, 4, 5].map((s) => (
+                                                            <span key={s} className={`material-icons-outlined text-[16px] ${s <= review.rating ? 'text-yellow-400' : 'text-slate-300 dark:text-slate-600'}`}>star</span>
+                                                        ))}
+                                                    </div>
+                                                    {review.comment && (
+                                                        <p className="text-sm text-slate-600 dark:text-slate-300">{review.comment}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {/* Legacy NFT reviews */}
+                                    {reviews.map((review, idx) => (
+                                        <div key={`nft-${idx}`} className="p-5">
+                                            <div className="flex items-start gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                                                    {review.reviewer_type.slice(0, 2).toUpperCase()}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <h4 className="font-semibold text-slate-900 dark:text-white capitalize text-sm">{review.role} &ndash; {review.reviewer_type}</h4>
+                                                        <span className="text-xs text-secondary dark:text-slate-500">{review.duration_months}mo</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-0.5 mb-2">
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <span key={i} className={`material-icons-outlined text-[16px] ${i < review.rating ? 'text-yellow-400' : 'text-slate-300 dark:text-slate-600'}`}>star</span>
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 font-mono">{review.stellar_asset}</span>
+                                                        <span className={`capitalize ${review.status === 'claimable' ? 'text-yellow-600' : 'text-green-600'}`}>{review.status}</span>
+                                                        {review.pdf_url && (
+                                                            <a href={review.pdf_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">PDF</a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
 

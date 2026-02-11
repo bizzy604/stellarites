@@ -55,6 +55,23 @@ CREATE TABLE IF NOT EXISTS payment_claims (
 );
 CREATE INDEX IF NOT EXISTS idx_claims_employer ON payment_claims(employer_id);
 CREATE INDEX IF NOT EXISTS idx_claims_worker ON payment_claims(worker_id);
+
+CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    review_id TEXT UNIQUE NOT NULL,
+    reviewer_id TEXT NOT NULL,
+    reviewee_id TEXT NOT NULL,
+    reviewer_role TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
+    comment TEXT DEFAULT '',
+    schedule_id TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (reviewer_id) REFERENCES workers(worker_id),
+    FOREIGN KEY (reviewee_id) REFERENCES workers(worker_id),
+    UNIQUE(reviewer_id, reviewee_id, schedule_id)
+);
+CREATE INDEX IF NOT EXISTS idx_reviews_reviewer ON reviews(reviewer_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_reviewee ON reviews(reviewee_id);
 """
 
 _initialised = False

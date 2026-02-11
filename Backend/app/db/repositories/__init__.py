@@ -7,6 +7,7 @@ from .worker_repository import (
 )
 from . import schedule_repository
 from . import claim_repository
+from . import review_repository
 
 __all__ = [
     "create_worker",
@@ -15,4 +16,5 @@ __all__ = [
     "get_worker_by_public_key",
     "schedule_repository",
     "claim_repository",
+    "review_repository",
 ]

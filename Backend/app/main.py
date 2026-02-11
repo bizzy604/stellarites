@@ -12,6 +12,7 @@ from app.routes.payments import router as payments_router  # Import payments rou
 from app.routes.accounts import router as accounts_router  # Import accounts router
 from app.routes.stellar import router as stellar_router  # Import stellar router
 from app.routes.schedules import router as schedules_router  # Import schedules router
+from app.routes.reviews import router as user_reviews_router  # Import user reviews router
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,7 @@ app.include_router(payments_router, prefix="/api/v1", tags=["Payments"])
 app.include_router(accounts_router, prefix="/api/v1", tags=["Accounts"])
 app.include_router(stellar_router, prefix="/api/v1", tags=["Stellar"])
 app.include_router(schedules_router, prefix="/api/v1", tags=["Schedules & Claims"])
+app.include_router(user_reviews_router, prefix="/api/v1", tags=["User Reviews"])
 
 USSD_API_KEY = Config.USSD_API_KEY or None
 

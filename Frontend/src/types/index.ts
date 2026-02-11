@@ -156,7 +156,7 @@ export interface CreateClaimRequest {
   message?: string;
 }
 
-// ─── Reviews ─────────────────────────────────────────────────────────
+// ─── Reviews (legacy NFT) ────────────────────────────────────────────
 export interface ReviewData {
   rating: number;
   role: string;
@@ -167,6 +167,42 @@ export interface ReviewData {
   stellar_issuer: string;
   stellar_tx_id: string;
   status: string;
+}
+
+// ─── Reviews (app-based) ─────────────────────────────────────────────
+export interface EligibleReviewee {
+  reviewee_id: string;
+  reviewee_name: string;
+  reviewee_role: string;
+  schedule_id: string;
+  relationship_since: string;
+}
+
+export interface SubmitReviewRequest {
+  reviewer_id: string;
+  reviewee_id: string;
+  rating: number;
+  comment?: string;
+  schedule_id?: string;
+}
+
+export interface UserReview {
+  id: number;
+  review_id: string;
+  reviewer_id: string;
+  reviewee_id: string;
+  reviewer_role: string;
+  rating: number;
+  comment: string;
+  schedule_id?: string;
+  created_at: string;
+  reviewer_name?: string;
+  reviewee_name?: string;
+}
+
+export interface UserRating {
+  avg_rating: number;
+  count: number;
 }
 
 // ─── Local session (stored in localStorage) ──────────────────────────
