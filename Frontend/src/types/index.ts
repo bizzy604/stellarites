@@ -104,6 +104,27 @@ export interface SendPaymentResponse {
   to_worker_id?: string;
 }
 
+// ─── M-Pesa Off-Ramp ─────────────────────────────────────────────────
+export interface OfframpRequest {
+  sender: string;           // NW-XXXX or G… Stellar public key
+  phone: string;            // M-Pesa phone number
+  amount: string;           // KSH amount
+}
+
+export interface OfframpResponse {
+  success: boolean;
+  stellar_tx_hash?: string;
+  stellar_explorer_url?: string;
+  mpesa_transaction_id: string;
+  phone: string;
+  amount_ksh: string;
+  amount_kes: string;
+  exchange_rate: number;
+  mpesa_status: string;     // completed | pending | failed
+  message: string;
+  provider: string;         // intasend | demo
+}
+
 // ─── Resolve ──────────────────────────────────────────────────────────
 export interface ResolveResponse {
   worker_id: string;
@@ -195,6 +216,9 @@ export interface UserReview {
   rating: number;
   comment: string;
   schedule_id?: string;
+  stellar_tx_hash?: string;
+  explorer_url?: string;
+  nft_asset_code?: string;
   created_at: string;
   reviewer_name?: string;
   reviewee_name?: string;

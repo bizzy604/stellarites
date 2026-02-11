@@ -65,6 +65,9 @@ CREATE TABLE IF NOT EXISTS reviews (
     rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
     comment TEXT DEFAULT '',
     schedule_id TEXT,
+    stellar_tx_hash TEXT DEFAULT '',
+    explorer_url TEXT DEFAULT '',
+    nft_asset_code TEXT DEFAULT '',
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (reviewer_id) REFERENCES workers(worker_id),
     FOREIGN KEY (reviewee_id) REFERENCES workers(worker_id),
@@ -82,6 +85,16 @@ def _ensure_schema(conn: sqlite3.Connection):
     global _initialised
     if not _initialised:
         conn.executescript(_SCHEMA)
+        # Migrations: add columns that may be missing on existing tables
+        for col, default in [
+            ("stellar_tx_hash", "''"),
+            ("explorer_url", "''"),
+            ("nft_asset_code", "''"),
+        ]:
+            try:
+                conn.execute(f"ALTER TABLE reviews ADD COLUMN {col} TEXT DEFAULT {default}")
+            except Exception:
+                pass  # column already exists
         _initialised = True
 
 

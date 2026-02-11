@@ -53,7 +53,7 @@ async def submit_review(
         raise ValueError(f"Reviews unlock on {review_unlocked_at.strftime('%b %d, %Y')}.")
 
     # Check for duplicate reviews (by checking existing NFTs)
-    existing_reviews = await get_reviews_for_account(reviewee_public_key)
+    existing_reviews = get_reviews_for_account(reviewee_public_key)
     for review in existing_reviews:
         # Assuming engagement_id can be stored in some part of the NFT metadata or derived from asset_code_suffix
         # For simplicity, if we find any RVW NFT, assume it's for this engagement for now.
@@ -107,7 +107,7 @@ async def submit_review(
         # Other fields can be added from pdf_review_data if needed
     }
 
-    mint_result = await mint_review_nft(
+    mint_result = mint_review_nft(
         reviewee_public_key=reviewee_public_key,
         pdf_cid=pdf_cid,
         asset_code_suffix=asset_code_suffix,
@@ -146,7 +146,7 @@ async def get_worker_reviews(worker_code: str) -> list[ReviewData]:
         raise ValueError("Worker not found.")
 
     stellar_public_key = worker["stellar_public_key"]
-    nft_records = await get_reviews_for_account(stellar_public_key)
+    nft_records = get_reviews_for_account(stellar_public_key)
 
     reviews_data = []
     for record in nft_records:

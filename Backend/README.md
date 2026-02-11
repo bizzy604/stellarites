@@ -113,7 +113,7 @@ Optional:
 - `AT_USERNAME`, `AT_API_KEY` — Africa's Talking (for welcome SMS)
 - `USSD_API_KEY` — If set, `POST /ussd` requires `Authorization: Bearer <USSD_API_KEY>`
 - `STELLAR_NETWORK` — `TESTNET` (default) or `PUBLIC`
-- `STELLAR_FUNDING_SECRET` — Testnet only: secret of account that funds new wallets with 1 XLM
+- `STELLAR_FUNDING_SECRET` — Testnet only: secret of account that funds new wallets with 1 KSH
 - `USSD_SESSION_TTL` — Seconds (default 180)
 
 ### 2. Database
@@ -187,7 +187,7 @@ API base: `http://localhost:5000`. Swagger UI: `http://localhost:5000/docs`
 ## Stellar
 
 - **On registration**: each new worker gets a Stellar keypair via `create_wallet_for_user()` (in `app/integrations/stellar/wallet.py`). Public key stored in clear; secret encrypted with `ENCRYPTION_KEY` and stored in `workers.stellar_secret_encrypted`.
-- **Testnet**: If `STELLAR_FUNDING_SECRET` is set, new accounts are funded with 1 XLM from that account. Otherwise keypair is still created; you can fund via [Friendbot](https://laboratory.stellar.org/#explorer?resource=friendbot&endpoint=friendbot) or your own flow.
+- **Testnet**: If `STELLAR_FUNDING_SECRET` is set, new accounts are funded with 1 KSH from that account. Otherwise keypair is still created; you can fund via [Friendbot](https://laboratory.stellar.org/#explorer?resource=friendbot&endpoint=friendbot) or your own flow.
 - **Decryption**: Use `decrypt_secret(encrypted)` only when needed for signing transactions (e.g. in a future payments service).
 
 ---

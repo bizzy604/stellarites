@@ -49,7 +49,7 @@ Config from `app.config.Config` (env via `.env`).
 
 ### Stellar integration (`app/integrations/stellar/`)
 
-- **create_wallet_for_user()** — Generates a Stellar keypair. On testnet with `STELLAR_FUNDING_SECRET` set, funds the new account with 1 XLM. Returns `(public_key, encrypted_secret)`.
+- **create_wallet_for_user()** — Generates a Stellar keypair. On testnet with `STELLAR_FUNDING_SECRET` set, funds the new account with 1 KSH. Returns `(public_key, encrypted_secret)`.
 - **encrypt_secret(secret)** / **decrypt_secret(encrypted)** — Fernet encryption derived from `ENCRYPTION_KEY`. Used to store and later retrieve the Stellar secret for a worker.
 
 Stellar is used only from **services** (e.g. when creating an account), never from USSD or routes directly.
@@ -128,7 +128,7 @@ Indexes on `phone` and `worker_id`.
 | AT_USERNAME, AT_API_KEY  | SMS          | Africa’s Talking                                 |
 | USSD_API_KEY             | Optional     | If set, required on POST /ussd                   |
 | STELLAR_NETWORK          | Stellar      | TESTNET or PUBLIC                                |
-| STELLAR_FUNDING_SECRET   | Testnet fund | Secret of account that funds new wallets (1 XLM) |
+| STELLAR_FUNDING_SECRET   | Testnet fund | Secret of account that funds new wallets (1 KSH) |
 | USSD_SESSION_TTL         | USSD         | Session TTL in seconds (default 180)             |
 
 ---

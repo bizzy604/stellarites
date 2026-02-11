@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getSession, clearSession } from '../services/session';
-import { getBalance, resolveAccount } from '../services/accounts';
-import { getPaymentHistory, getPaymentStats, sendPayment } from '../services/payments';
+import { getBalance } from '../services/accounts';
+import { getPaymentHistory, getPaymentStats, offrampToMpesa } from '../services/payments';
 import { getWorkerReviews, getEligibleReviewees, submitReview, getReviewsFor, getUserRating } from '../services/reviews';
 import { getWorkerSchedules, createClaim, getWorkerClaims } from '../services/schedules';
-import type { PaymentRecord, PaymentStats, ReviewData, BalanceItem, SendPaymentResponse, ResolveResponse, Schedule, PaymentClaim, EligibleReviewee, UserReview, UserRating } from '../types';
+import type { PaymentRecord, PaymentStats, ReviewData, BalanceItem, Schedule, PaymentClaim, EligibleReviewee, UserReview, UserRating, OfframpResponse } from '../types';
 
 
 export default function WorkerDashboard() {
@@ -25,11 +25,12 @@ export default function WorkerDashboard() {
     // Copy-to-clipboard feedback
     const [copiedField, setCopiedField] = useState('');
 
-    // Withdraw State
-    const [withdrawAmount, setWithdrawAmount] = useState('');
-    const [withdrawDest, setWithdrawDest] = useState('');
-    const [withdrawStep, setWithdrawStep] = useState<'input' | 'processing' | 'success' | 'error'>('input');
-    const [withdrawError, setWithdrawError] = useState('');
+    // M-Pesa Off-Ramp State
+    const [offrampAmount, setOfframpAmount] = useState('');
+    const [offrampPhone, setOfframpPhone] = useState(session?.phone ?? '');
+    const [offrampStep, setOfframpStep] = useState<'input' | 'processing' | 'success' | 'error'>('input');
+    const [offrampError, setOfframpError] = useState('');
+    const [offrampResult, setOfframpResult] = useState<OfframpResponse | null>(null);
 
     // ── Live data state ─────────────────────────────────────────────
     const [balance, setBalance] = useState<number>(0);
@@ -90,56 +91,46 @@ export default function WorkerDashboard() {
         return () => { cancelled = true; };
     }, [publicKey]);
 
-    // ── Withdraw result ──────────────────────────────────────────────
-    const [withdrawResult, setWithdrawResult] = useState<SendPaymentResponse | null>(null);
-
-    // Live-resolve withdraw destination
-    const [resolvedWithdrawDest, setResolvedWithdrawDest] = useState<ResolveResponse | null>(null);
-    const [resolvingWithdraw, setResolvingWithdraw] = useState(false);
-
-    useEffect(() => {
-        const id = withdrawDest.trim();
-        if (!id || id.length < 3) { setResolvedWithdrawDest(null); return; }
-        let cancelled = false;
-        const timer = setTimeout(async () => {
-            setResolvingWithdraw(true);
-            try {
-                const r = await resolveAccount(id);
-                if (!cancelled) setResolvedWithdrawDest(r);
-            } catch {
-                if (!cancelled) setResolvedWithdrawDest(null);
-            } finally {
-                if (!cancelled) setResolvingWithdraw(false);
-            }
-        }, 400);
-        return () => { cancelled = true; clearTimeout(timer); };
-    }, [withdrawDest]);
-
-    // ── Withdraw handler ────────────────────────────────────────────
-    const handleWithdraw = async (e: React.FormEvent) => {
+    // ── M-Pesa Off-Ramp handler ────────────────────────────────────
+    const handleOfframp = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!publicKey) return;
-        setWithdrawStep('processing');
-        setWithdrawError('');
+
+        const val = parseFloat(offrampAmount);
+        if (isNaN(val) || val <= 0) {
+            setOfframpError('Please enter a valid amount');
+            return;
+        }
+        if (val > balance) {
+            setOfframpError('Insufficient balance');
+            return;
+        }
+        if (!offrampPhone.trim()) {
+            setOfframpError('Please enter your M-Pesa phone number');
+            return;
+        }
+
+        setOfframpStep('processing');
+        setOfframpError('');
         try {
-            const result = await sendPayment({
+            const result = await offrampToMpesa({
                 sender: session?.worker_id ?? publicKey,
-                destination: withdrawDest.trim(),
-                amount: withdrawAmount,
+                phone: offrampPhone.trim(),
+                amount: offrampAmount,
             });
-            setWithdrawResult(result);
-            setWithdrawStep('success');
+            setOfframpResult(result);
+            setOfframpStep('success');
             // Refresh balance & transactions
             getBalance(publicKey).then((res) => {
-                const xlm = res.balances.find(b => b.asset_type === 'native');
-                setBalance(xlm ? parseFloat(xlm.balance) : 0);
+                const native = res.balances.find(b => b.asset_type === 'native');
+                setBalance(native ? parseFloat(native.balance) : 0);
             });
             getPaymentHistory(publicKey, 20).then((res) => {
                 setTransactions(res.payments.map(p => ({ ...p, type: p.to_account === publicKey ? 'income' : 'expense' })));
             });
         } catch (err: unknown) {
-            setWithdrawError(err instanceof Error ? err.message : 'Withdrawal failed.');
-            setWithdrawStep('error');
+            setOfframpError(err instanceof Error ? err.message : 'Off-ramp failed. Please try again.');
+            setOfframpStep('error');
         }
     };
 
@@ -395,7 +386,7 @@ export default function WorkerDashboard() {
                                                     </span>
                                                 </button>
                                             </span>
-                                            <span className="bg-white/60 dark:bg-slate-700/60 px-2 py-1 rounded text-xs font-semibold text-blue-700 dark:text-blue-300">XLM</span>
+                                            <span className="bg-white/60 dark:bg-slate-700/60 px-2 py-1 rounded text-xs font-semibold text-blue-700 dark:text-blue-300">KSH</span>
                                         </div>
                                         <div className="mb-4">
                                             <h2 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -408,130 +399,212 @@ export default function WorkerDashboard() {
                                     </div>
                                 </div>
 
-                                {/* Inline Withdraw Card */}
+                                {/* M-Pesa Off-Ramp Card */}
                                 <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark p-6 shadow-sm">
-                                    <div className="flex items-center mb-6">
-                                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-3">
-                                            <span className="material-icons-outlined">payments</span>
+                                    <div className="flex items-center mb-5">
+                                        <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center mr-3 p-1.5">
+                                            <img
+                                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png"
+                                                alt="M-Pesa"
+                                                className="w-full h-full object-contain"
+                                            />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-slate-900 dark:text-white">Withdraw Funds</h3>
-                                            <p className="text-xs text-secondary dark:text-slate-400">Transfer to M-Pesa</p>
+                                            <h3 className="font-bold text-slate-900 dark:text-white">Withdraw to M-Pesa</h3>
+                                            <p className="text-xs text-secondary dark:text-slate-400">Off-ramp KSH to your phone</p>
                                         </div>
                                     </div>
 
-                                    {withdrawStep === 'input' && (
-                                        <form onSubmit={handleWithdraw}>
-                                            <div className="mb-3">
-                                                <label htmlFor="withdrawDest" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                                    Destination (Worker ID or Stellar key)
+                                    {offrampStep === 'input' && (
+                                        <form onSubmit={handleOfframp} className="space-y-4">
+                                            {/* M-Pesa Phone */}
+                                            <div>
+                                                <label htmlFor="offrampPhone" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                                                    M-Pesa Phone Number
                                                 </label>
-                                                <input
-                                                    type="text"
-                                                    id="withdrawDest"
-                                                    value={withdrawDest}
-                                                    onChange={(e) => setWithdrawDest(e.target.value)}
-                                                    className="block w-full pl-4 pr-4 py-3 border border-border-light dark:border-border-dark rounded-xl bg-gray-50 dark:bg-gray-800 text-slate-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-mono text-xs"
-                                                    placeholder="NW-XXXXXXXX or G..."
-                                                    required
-                                                />
-                                                {resolvingWithdraw && (
-                                                    <p className="text-xs text-slate-400 mt-1">Looking up account...</p>
-                                                )}
-                                                {resolvedWithdrawDest && !resolvingWithdraw && (
-                                                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
-                                                        <span className="material-icons-outlined text-sm">check_circle</span>
-                                                        {resolvedWithdrawDest.name || resolvedWithdrawDest.worker_id} &mdash; {resolvedWithdrawDest.role}
-                                                    </p>
-                                                )}
-                                                {!resolvedWithdrawDest && !resolvingWithdraw && withdrawDest.trim().length >= 3 && (
-                                                    <p className="text-xs text-amber-500 mt-1">External address (not in system)</p>
-                                                )}
+                                                <div className="relative">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <span className="material-icons-outlined text-green-500 text-lg">phone_android</span>
+                                                    </div>
+                                                    <input
+                                                        type="tel"
+                                                        id="offrampPhone"
+                                                        value={offrampPhone}
+                                                        onChange={(e) => { setOfframpPhone(e.target.value); setOfframpError(''); }}
+                                                        className="block w-full pl-10 pr-4 py-3 border border-border-light dark:border-border-dark rounded-xl bg-gray-50 dark:bg-gray-800 text-slate-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all font-medium"
+                                                        placeholder="0712 345 678"
+                                                        required
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="mb-4">
-                                                <label htmlFor="amount" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                                    Amount (XLM)
+
+                                            {/* Amount */}
+                                            <div>
+                                                <label htmlFor="offrampAmount" className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                                                    Amount (KSH)
                                                 </label>
                                                 <div className="relative">
                                                     <input
                                                         type="number"
-                                                        id="amount"
-                                                        value={withdrawAmount}
-                                                        onChange={(e) => setWithdrawAmount(e.target.value)}
-                                                        className="block w-full pl-4 pr-12 py-3 border border-border-light dark:border-border-dark rounded-xl bg-gray-50 dark:bg-gray-800 text-slate-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-medium"
+                                                        id="offrampAmount"
+                                                        value={offrampAmount}
+                                                        onChange={(e) => { setOfframpAmount(e.target.value); setOfframpError(''); }}
+                                                        className="block w-full pl-4 pr-12 py-3 border border-border-light dark:border-border-dark rounded-xl bg-gray-50 dark:bg-gray-800 text-slate-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all font-medium text-lg"
                                                         placeholder="0.00"
                                                         step="0.01"
                                                         required
                                                     />
                                                     <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                                        <span className="text-gray-500 dark:text-gray-400 font-medium">XLM</span>
+                                                        <span className="text-gray-500 dark:text-gray-400 font-medium">KSH</span>
                                                     </div>
                                                 </div>
+                                                <div className="flex justify-between items-center mt-1.5">
+                                                    {offrampError ? (
+                                                        <p className="text-xs text-red-500 flex items-center gap-1">
+                                                            <span className="material-icons-outlined text-xs">error</span>
+                                                            {offrampError}
+                                                        </p>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                            Available: <span className="font-medium text-slate-900 dark:text-white">{balance.toLocaleString(undefined, { minimumFractionDigits: 2 })} KSH</span>
+                                                        </p>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setOfframpAmount(Math.max(0, balance - 1.5).toFixed(2))}
+                                                        className="text-[10px] font-bold text-green-600 hover:text-green-700 uppercase"
+                                                    >
+                                                        Max
+                                                    </button>
+                                                </div>
                                             </div>
+
+                                            {/* Conversion Preview */}
+                                            {offrampAmount && parseFloat(offrampAmount) > 0 && (
+                                                <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/40">
+                                                    <span className="material-icons-outlined text-green-600 text-lg">swap_horiz</span>
+                                                    <div className="text-xs">
+                                                        <span className="font-bold text-slate-900 dark:text-white">{parseFloat(offrampAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })} KSH</span>
+                                                        <span className="text-slate-400 mx-1.5">&rarr;</span>
+                                                        <span className="font-bold text-green-700 dark:text-green-300">KES {parseFloat(offrampAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                        <span className="text-slate-400 ml-1">(1:1 rate)</span>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             <button
                                                 type="submit"
-                                                className="w-full py-3 px-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transform active:scale-95 transition-all flex items-center justify-center gap-2"
+                                                className="w-full py-3.5 px-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg shadow-green-500/20 transform active:scale-95 transition-all flex items-center justify-center gap-2"
                                             >
-                                                Withdraw Now
+                                                <img
+                                                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png"
+                                                    alt=""
+                                                    className="w-5 h-5 object-contain brightness-0 invert"
+                                                />
+                                                Withdraw to M-Pesa
                                             </button>
                                         </form>
                                     )}
 
-                                    {withdrawStep === 'error' && (
-                                        <div className="text-center py-2">
-                                            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
-                                                <span className="material-icons-outlined text-2xl">error</span>
+                                    {offrampStep === 'processing' && (
+                                        <div className="text-center py-6">
+                                            <div className="w-16 h-16 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4 relative">
+                                                <div className="absolute inset-0 border-4 border-green-100 dark:border-green-800 rounded-full"></div>
+                                                <div className="absolute inset-0 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                                                <span className="material-icons-outlined text-3xl text-green-600 animate-pulse">phone_android</span>
                                             </div>
-                                            <p className="font-bold text-slate-900 dark:text-white">Failed</p>
-                                            <p className="text-xs text-red-500 mt-1">{withdrawError}</p>
+                                            <h3 className="font-bold text-slate-900 dark:text-white mb-1">Processing Off-Ramp</h3>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                Converting <span className="font-bold">{parseFloat(offrampAmount).toLocaleString()} KSH</span> and sending to M-Pesa...
+                                            </p>
+                                            <div className="mt-4 space-y-2 text-left max-w-xs mx-auto">
+                                                <div className="flex items-center gap-2 text-xs text-green-600">
+                                                    <span className="material-icons-outlined text-sm">check_circle</span>
+                                                    Burning KSH on Stellar...
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                                    <div className="w-4 h-4 border-2 border-slate-300 border-t-green-500 rounded-full animate-spin"></div>
+                                                    Sending KES to M-Pesa...
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {offrampStep === 'error' && (
+                                        <div className="text-center py-4">
+                                            <div className="w-14 h-14 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <span className="material-icons-outlined text-3xl">error</span>
+                                            </div>
+                                            <p className="font-bold text-slate-900 dark:text-white mb-1">Off-Ramp Failed</p>
+                                            <p className="text-xs text-red-500 mb-4">{offrampError}</p>
                                             <button
-                                                onClick={() => setWithdrawStep('input')}
-                                                className="mt-4 text-sm text-primary hover:underline"
+                                                onClick={() => setOfframpStep('input')}
+                                                className="text-sm text-primary hover:underline font-medium"
                                             >
                                                 Try again
                                             </button>
                                         </div>
                                     )}
 
-                                    {withdrawStep === 'processing' && (
-                                        <div className="text-center py-4">
-                                            <div className="w-12 h-12 border-4 border-blue-200 border-t-primary rounded-full animate-spin mx-auto mb-3"></div>
-                                            <p className="text-sm font-medium text-slate-900 dark:text-white">Processing...</p>
-                                        </div>
-                                    )}
-
-                                    {withdrawStep === 'success' && (
-                                        <div className="text-center py-2 space-y-3">
-                                            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
-                                                <span className="material-icons-outlined text-2xl">check</span>
+                                    {offrampStep === 'success' && offrampResult && (
+                                        <div className="text-center py-3 space-y-4">
+                                            <div className="w-14 h-14 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto">
+                                                <span className="material-icons-outlined text-4xl text-green-600">check_circle</span>
                                             </div>
-                                            <p className="font-bold text-slate-900 dark:text-white">
-                                                {withdrawResult?.amount ?? withdrawAmount} XLM Sent!
-                                            </p>
-                                            {withdrawResult?.explorer_url && (
+                                            <div>
+                                                <h3 className="font-bold text-lg text-slate-900 dark:text-white">Sent to M-Pesa!</h3>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{offrampResult.message}</p>
+                                            </div>
+
+                                            {/* Transaction Details */}
+                                            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-left space-y-2 border border-gray-100 dark:border-gray-700">
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-500">M-Pesa Transaction</span>
+                                                    <span className="font-mono font-bold text-slate-900 dark:text-white">{offrampResult.mpesa_transaction_id}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-500">Phone</span>
+                                                    <span className="font-medium text-slate-900 dark:text-white">{offrampResult.phone}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-500">Amount Sent</span>
+                                                    <span className="font-bold text-green-600">KES {parseFloat(offrampResult.amount_kes).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-gray-500">KSH Burned</span>
+                                                    <span className="font-medium text-slate-900 dark:text-white">{parseFloat(offrampResult.amount_ksh).toLocaleString(undefined, { minimumFractionDigits: 2 })} KSH</span>
+                                                </div>
+                                                {offrampResult.provider === 'demo' && (
+                                                    <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 pt-1 border-t border-gray-200 dark:border-gray-600">
+                                                        <span className="material-icons-outlined text-xs">info</span>
+                                                        Demo mode — no real M-Pesa payout sent
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Stellar explorer link */}
+                                            {offrampResult.stellar_explorer_url && (
                                                 <a
-                                                    href={withdrawResult.explorer_url}
+                                                    href={offrampResult.stellar_explorer_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                                                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
                                                 >
-                                                    <span className="material-icons-outlined text-base">open_in_new</span>
-                                                    View on Stellar Explorer
+                                                    <span className="material-icons-outlined text-sm">open_in_new</span>
+                                                    View burn transaction on Stellar
                                                 </a>
                                             )}
-                                            <div>
-                                                <button
-                                                    onClick={() => {
-                                                        setWithdrawStep('input');
-                                                        setWithdrawAmount('');
-                                                        setWithdrawDest('');
-                                                        setWithdrawResult(null);
-                                                    }}
-                                                    className="text-sm text-primary hover:underline"
-                                                >
-                                                    Make another withdrawal
-                                                </button>
-                                            </div>
+
+                                            <button
+                                                onClick={() => {
+                                                    setOfframpStep('input');
+                                                    setOfframpAmount('');
+                                                    setOfframpResult(null);
+                                                }}
+                                                className="text-sm text-primary hover:underline font-medium"
+                                            >
+                                                Make another withdrawal
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -663,7 +736,7 @@ export default function WorkerDashboard() {
                                                     <div className="flex items-center gap-3">
                                                         <div className="text-right">
                                                             <p className="font-bold text-slate-900 dark:text-white">
-                                                                {parseFloat(sched.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} XLM
+                                                                {parseFloat(sched.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} KSH
                                                             </p>
                                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${
                                                                 isOverdue
@@ -740,7 +813,7 @@ export default function WorkerDashboard() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-medium text-slate-900 dark:text-white">
-                                                            {parseFloat(claim.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} XLM
+                                                            {parseFloat(claim.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} KSH
                                                             <span className="text-slate-400 font-normal"> to </span>
                                                             <span className="font-mono text-xs">{claim.employer_id}</span>
                                                         </p>
@@ -884,7 +957,7 @@ export default function WorkerDashboard() {
                                                     <td className="px-6 py-4">
                                                         <span className={`font-semibold ${tx.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-slate-900 dark:text-white'
                                                             }`}>
-                                                            {tx.type === 'income' ? '+' : '-'} {amt.toLocaleString(undefined, { minimumFractionDigits: 2 })} XLM
+                                                            {tx.type === 'income' ? '+' : '-'} {amt.toLocaleString(undefined, { minimumFractionDigits: 2 })} KSH
                                                         </span>
                                                         <p className="text-xs text-slate-400">≈ ${(amt * 0.125).toFixed(2)}</p>
                                                     </td>
@@ -1088,7 +1161,26 @@ export default function WorkerDashboard() {
                                                         ))}
                                                     </div>
                                                     {review.comment && (
-                                                        <p className="text-sm text-slate-600 dark:text-slate-300">{review.comment}</p>
+                                                        <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{review.comment}</p>
+                                                    )}
+                                                    {review.nft_asset_code && (
+                                                        <div className="flex items-center gap-2 text-xs">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 font-mono">
+                                                                <span className="material-icons-outlined text-[10px]">token</span>
+                                                                {review.nft_asset_code}
+                                                            </span>
+                                                            {review.explorer_url && (
+                                                                <a
+                                                                    href={review.explorer_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                                                                >
+                                                                    <span className="material-icons-outlined text-[12px]">open_in_new</span>
+                                                                    Verify on Stellar
+                                                                </a>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>

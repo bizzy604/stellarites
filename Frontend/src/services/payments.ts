@@ -5,6 +5,8 @@ import type {
   SendPaymentRequest,
   SendPaymentResponse,
   WithdrawRequest,
+  OfframpRequest,
+  OfframpResponse,
 } from "../types";
 
 /** Fetch payment history for a Stellar account. */
@@ -27,7 +29,7 @@ export function getPaymentStats(publicKey: string) {
 }
 
 /**
- * Send XLM from a registered account to any Stellar address.
+ * Send KSH from a registered account to any Stellar address.
  * The backend decrypts the sender's secret, signs, and submits.
  */
 export function sendPayment(data: SendPaymentRequest) {
@@ -40,4 +42,12 @@ export function withdraw(data: WithdrawRequest) {
     "/api/v1/payments/withdraw",
     data,
   );
+}
+
+/**
+ * Off-ramp KSH to M-Pesa.
+ * Burns KSH on Stellar and sends KES to the worker's M-Pesa phone.
+ */
+export function offrampToMpesa(data: OfframpRequest) {
+  return api.post<OfframpResponse>("/api/v1/payments/offramp", data);
 }

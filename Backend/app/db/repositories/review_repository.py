@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timedelta
 from app.db import get_connection
 
-_COLS = "id, review_id, reviewer_id, reviewee_id, reviewer_role, rating, comment, schedule_id, created_at"
+_COLS = "id, review_id, reviewer_id, reviewee_id, reviewer_role, rating, comment, schedule_id, stellar_tx_hash, explorer_url, nft_asset_code, created_at"
 
 REVIEW_ELIGIBILITY_DAYS = 0  # TODO: restore to 90 (3 months) after demo
 
@@ -96,6 +96,24 @@ def create(
             (review_id,),
         ).fetchone()
         return dict(row)
+    finally:
+        conn.close()
+
+
+def update_nft_data(review_id: str, stellar_tx_hash: str, explorer_url: str, nft_asset_code: str) -> dict | None:
+    """Update a review record with Stellar NFT data after minting."""
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE reviews SET stellar_tx_hash = ?, explorer_url = ?, nft_asset_code = ? WHERE review_id = ?",
+            (stellar_tx_hash, explorer_url, nft_asset_code, review_id),
+        )
+        conn.commit()
+        row = conn.execute(
+            f"SELECT {_COLS} FROM reviews WHERE review_id = ?",
+            (review_id,),
+        ).fetchone()
+        return dict(row) if row else None
     finally:
         conn.close()
 

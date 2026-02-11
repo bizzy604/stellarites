@@ -90,7 +90,7 @@ class AccountService:
         
         Args:
             new_public_key: The new account's public key
-            starting_balance: XLM to send (default: 5 XLM)
+            starting_balance: KSH to send (default: 5 KSH)
             
         Returns:
             Transaction result

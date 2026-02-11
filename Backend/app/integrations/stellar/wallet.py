@@ -67,7 +67,7 @@ def create_wallet_for_user() -> tuple[str, str]:
     """
     Generate a new Stellar keypair and return its public key alongside the encrypted secret.
     
-    If running on TESTNET and Config.STELLAR_FUNDING_SECRET is set, the function attempts to fund the new account with 1 XLM; any errors during funding are ignored so wallet creation still succeeds.
+    If running on TESTNET and Config.STELLAR_FUNDING_SECRET is set, the function attempts to fund the new account with 1 KSH; any errors during funding are ignored so wallet creation still succeeds.
     
     Returns:
         (public_key, encrypted_secret): `public_key` is the account's Stellar public key as a string; `encrypted_secret` is the corresponding secret key encrypted for storage.

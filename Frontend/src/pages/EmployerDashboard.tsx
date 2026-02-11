@@ -420,7 +420,7 @@ export default function EmployerDashboard() {
                                             <span className="material-icons-outlined text-lg">account_balance_wallet</span>
                                             Total Balance
                                         </span>
-                                        <span className="bg-white/60 dark:bg-slate-700/60 px-2 py-1 rounded text-xs font-semibold text-purple-700 dark:text-purple-300">XLM</span>
+                                        <span className="bg-white/60 dark:bg-slate-700/60 px-2 py-1 rounded text-xs font-semibold text-purple-700 dark:text-purple-300">KSH</span>
                                     </div>
                                     <div className="mb-6">
                                         <h2 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
@@ -628,7 +628,7 @@ export default function EmployerDashboard() {
                                             )}
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Amount (XLM)</label>
+                                            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Amount (KSH)</label>
                                             <input
                                                 type="number"
                                                 value={schedAmount}
@@ -717,7 +717,7 @@ export default function EmployerDashboard() {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="text-right">
-                                                <p className="font-bold text-slate-900 dark:text-white">{parseFloat(sched.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} XLM</p>
+                                                <p className="font-bold text-slate-900 dark:text-white">{parseFloat(sched.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} KSH</p>
                                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${
                                                     sched.status === 'active'
                                                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
@@ -782,7 +782,7 @@ export default function EmployerDashboard() {
                                             </div>
                                             <div>
                                                 <p className="font-medium text-slate-900 dark:text-white text-sm">
-                                                    <span className="font-mono">{claim.worker_id}</span> requests <span className="font-bold">{parseFloat(claim.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} XLM</span>
+                                                    <span className="font-mono">{claim.worker_id}</span> requests <span className="font-bold">{parseFloat(claim.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })} KSH</span>
                                                 </p>
                                                 {claim.message && (
                                                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 italic">"{claim.message}"</p>
@@ -992,7 +992,26 @@ export default function EmployerDashboard() {
                                                         ))}
                                                     </div>
                                                     {review.comment && (
-                                                        <p className="text-sm text-slate-600 dark:text-slate-300">{review.comment}</p>
+                                                        <p className="text-sm text-slate-600 dark:text-slate-300 mb-2">{review.comment}</p>
+                                                    )}
+                                                    {review.nft_asset_code && (
+                                                        <div className="flex items-center gap-2 text-xs">
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-300 font-mono">
+                                                                <span className="material-icons-outlined text-[10px]">token</span>
+                                                                {review.nft_asset_code}
+                                                            </span>
+                                                            {review.explorer_url && (
+                                                                <a
+                                                                    href={review.explorer_url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                                                                >
+                                                                    <span className="material-icons-outlined text-[12px]">open_in_new</span>
+                                                                    Verify on Stellar
+                                                                </a>
+                                                            )}
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -1014,7 +1033,7 @@ export default function EmployerDashboard() {
                                     </div>
                                     <div>
                                         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Pay Worker</h2>
-                                        <p className="text-secondary dark:text-slate-400 mt-1">Send XLM using a Worker ID (e.g. NW-63A758A8).</p>
+                                        <p className="text-secondary dark:text-slate-400 mt-1">Send KSH using a Worker ID (e.g. NW-63A758A8).</p>
                                     </div>
                                 </div>
 
@@ -1052,7 +1071,7 @@ export default function EmployerDashboard() {
 
                                         <div>
                                             <label htmlFor="payAmount" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                                                Amount (XLM)
+                                                Amount (KSH)
                                             </label>
                                             <div className="relative">
                                                 <input
@@ -1067,7 +1086,7 @@ export default function EmployerDashboard() {
                                                     placeholder="0.00"
                                                 />
                                                 <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                                    <span className="text-slate-500 font-medium">XLM</span>
+                                                    <span className="text-slate-500 font-medium">KSH</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -1109,7 +1128,7 @@ export default function EmployerDashboard() {
                                         </div>
                                         <div>
                                             <p className="text-xl font-bold text-slate-900 dark:text-white">Payment Sent!</p>
-                                            <p className="text-sm text-slate-500 mt-1">{payResult.amount} XLM sent successfully</p>
+                                            <p className="text-sm text-slate-500 mt-1">{payResult.amount} KSH sent successfully</p>
                                         </div>
                                         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 text-left space-y-2">
                                             <div className="flex justify-between text-sm">
@@ -1120,7 +1139,7 @@ export default function EmployerDashboard() {
                                             </div>
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-slate-500">Amount</span>
-                                                <span className="font-semibold text-slate-900 dark:text-white">{payResult.amount} XLM</span>
+                                                <span className="font-semibold text-slate-900 dark:text-white">{payResult.amount} KSH</span>
                                             </div>
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-slate-500">Tx Hash</span>

@@ -57,6 +57,12 @@ class Config:
     REVIEW_LINK_EXPIRY_DAYS = int(os.getenv("REVIEW_LINK_EXPIRY_DAYS", "7"))
     REVIEW_FRONTEND_URL = os.getenv("REVIEW_FRONTEND_URL", "https://app.nannychain.com/review")
 
+    # ── M-Pesa Off-Ramp (IntaSend) ───────────────────────────────
+    INTASEND_API_KEY = os.getenv("INTASEND_API_KEY", "")
+    INTASEND_SECRET = os.getenv("INTASEND_SECRET", "")
+    INTASEND_BASE_URL = os.getenv("INTASEND_BASE_URL", "https://sandbox.intasend.com")
+    KSH_TO_KES_RATE = float(os.getenv("KSH_TO_KES_RATE", "1.0"))
+
     # ── App ──────────────────────────────────────────────────────
     SECRET_KEY = os.getenv("SECRET_KEY", "changeme")
     app_debug = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")

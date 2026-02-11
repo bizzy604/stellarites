@@ -43,7 +43,7 @@ class PaymentService:
             source_public_key: Sender's public key
             destination_public_key: Recipient's public key
             amount: Amount to send (string for precision)
-            asset: Asset to send (default: native XLM)
+            asset: Asset to send (default: native KSH)
             memo: Optional text memo
             
         Returns:
@@ -66,7 +66,7 @@ class PaymentService:
                 asset=asset
             )
         else:
-            # create_account only works with native XLM
+            # create_account only works with native KSH
             builder.append_create_account_op(
                 destination=destination_public_key,
                 starting_balance=amount

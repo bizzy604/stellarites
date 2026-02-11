@@ -1,15 +1,23 @@
 """
 Review Routes
 
-Practical review system using SQLite.
+Practical review system using SQLite + Stellar NFT minting.
 Workers review employers and employers review workers,
 only after a 3-month working relationship (via scheduled payments).
+Every submitted review is also minted as an NFT on Stellar.
 """
+import hashlib
+import time
+import traceback
+import logging
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from typing import Optional, List
 
-from app.db.repositories import review_repository, get_by_worker_id
+from app.db.repositories import review_repository, get_by_worker_id, get_worker_by_public_key
+from app.integrations.stellar.nft import mint_review_nft
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Reviews"])
 
@@ -41,6 +49,9 @@ class ReviewResponse(BaseModel):
     rating: int
     comment: str
     schedule_id: Optional[str] = None
+    stellar_tx_hash: Optional[str] = ""
+    explorer_url: Optional[str] = ""
+    nft_asset_code: Optional[str] = ""
     created_at: str
     reviewer_name: Optional[str] = None
     reviewee_name: Optional[str] = None
@@ -100,7 +111,7 @@ def submit_review(req: SubmitReviewRequest):
             detail="You can only review someone after a 3-month working relationship.",
         )
 
-    # Create the review
+    # Create the review in SQLite
     try:
         row = review_repository.create(
             reviewer_id=req.reviewer_id.upper(),
@@ -110,7 +121,6 @@ def submit_review(req: SubmitReviewRequest):
             comment=req.comment,
             schedule_id=req.schedule_id,
         )
-        return ReviewResponse(**row)
     except Exception as e:
         if "UNIQUE constraint" in str(e):
             raise HTTPException(
@@ -118,6 +128,49 @@ def submit_review(req: SubmitReviewRequest):
                 detail="You have already reviewed this person for this schedule.",
             )
         raise HTTPException(status_code=500, detail=str(e))
+
+    # Mint Stellar NFT for the reviewee
+    try:
+        reviewee_pk = reviewee["stellar_public_key"]
+        asset_suffix = hashlib.sha256(
+            f"{row['review_id']}-{req.reviewer_id}-{time.time()}".encode()
+        ).hexdigest()[:9]
+
+        nft_metadata = {
+            "rating": str(req.rating),
+            "reviewer_type": reviewer["role"],
+            "role": reviewee["role"],
+            "duration": "0",
+            "reviewer_id": req.reviewer_id.upper(),
+        }
+
+        mint_result = mint_review_nft(
+            reviewee_public_key=reviewee_pk,
+            pdf_cid=row["review_id"],  # use review_id as CID placeholder
+            asset_code_suffix=asset_suffix,
+            metadata=nft_metadata,
+        )
+
+        # Update the review record with NFT data
+        row = review_repository.update_nft_data(
+            review_id=row["review_id"],
+            stellar_tx_hash=mint_result["transaction_id"],
+            explorer_url=mint_result["explorer_url"],
+            nft_asset_code=mint_result["asset_code"],
+        ) or row
+
+        logger.info(
+            "Minted review NFT %s for %s (tx: %s)",
+            mint_result["asset_code"],
+            req.reviewee_id,
+            mint_result["transaction_id"],
+        )
+    except Exception as e:
+        # NFT minting is best-effort; the review is still saved in SQLite
+        logger.warning("NFT minting failed for review %s: %s", row["review_id"], e)
+        traceback.print_exc()
+
+    return ReviewResponse(**row)
 
 
 @router.get("/reviews/for/{user_id}", response_model=List[ReviewResponse])

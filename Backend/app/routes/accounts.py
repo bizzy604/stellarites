@@ -129,9 +129,9 @@ class ResolveResponse(BaseModel):
 @router.get("/resolve/{identifier}", response_model=ResolveResponse)
 def resolve_account(identifier: str):
     """
-    Resolve a worker ID (NW-XXXX) or Stellar public key (G…) to full
-    account details.  Useful for the frontend to display names / validate
-    recipients before sending payments.
+    Resolve a worker ID (NW-XXXX), Stellar public key (G…), or phone number
+    to full account details.  Useful for the frontend to display names /
+    validate recipients before sending payments.
     """
     identifier = identifier.strip()
     row = None
@@ -140,6 +140,9 @@ def resolve_account(identifier: str):
         row = get_by_worker_id(identifier.upper())
     elif identifier.startswith("G"):
         row = get_worker_by_public_key(identifier)
+    else:
+        # Try phone number lookup as fallback
+        row = get_worker_by_phone(identifier)
 
     if not row:
         raise HTTPException(
@@ -192,7 +195,7 @@ def get_worker_profile(public_key: str):
 @router.get("/{public_key}/balance", response_model=BalanceResponse)
 def get_account_balance(public_key: str):
     """
-    Fetch live XLM (and other asset) balances from the Stellar network.
+    Fetch live KSH (and other asset) balances from the Stellar network.
     Returns zero balance if the account is not funded yet.
     """
     try:
@@ -227,7 +230,7 @@ class FundResponse(BaseModel):
 @router.post("/{public_key}/fund", response_model=FundResponse)
 def fund_account(public_key: str):
     """
-    Fund a Stellar **testnet** account via Friendbot (adds 10 000 XLM).
+    Fund a Stellar **testnet** account via Friendbot (adds 10 000 KSH).
 
     Only works when STELLAR_NETWORK=TESTNET.
     """
@@ -245,7 +248,7 @@ def fund_account(public_key: str):
         )
 
         if resp.status_code == 200:
-            return FundResponse(funded=True, message="Account funded with 10,000 XLM from Friendbot.")
+            return FundResponse(funded=True, message="Account funded with 10,000 KSH from Friendbot.")
 
         # Friendbot returns 400 if already funded
         body = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {}

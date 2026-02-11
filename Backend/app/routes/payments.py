@@ -100,6 +100,288 @@ class PaymentStatsResponse(BaseModel):
     unique_recipients: int
 
 
+class OfframpRequest(BaseModel):
+    """Off-ramp KSH from Stellar to M-Pesa."""
+    sender: str              # Worker ID (NW-XXXX) or Stellar public key
+    phone: str               # M-Pesa phone number (0712..., +254712..., 254712...)
+    amount: str              # KSH amount to off-ramp
+
+
+class OfframpResponse(BaseModel):
+    success: bool
+    stellar_tx_hash: Optional[str] = None
+    stellar_explorer_url: Optional[str] = None
+    mpesa_transaction_id: str = ""
+    phone: str
+    amount_ksh: str
+    amount_kes: str
+    exchange_rate: float
+    mpesa_status: str        # completed | pending | failed
+    message: str
+    provider: str            # intasend | demo
+
+
+# ---------------------------------------------------------------------------
+# Helper: resolve an identifier to a DB row + Stellar public key
+# (must be defined before any routes that use it)
+# ---------------------------------------------------------------------------
+
+def _resolve_account(identifier: str) -> tuple[str, dict | None]:
+    """Resolve a worker ID (NW-…) or Stellar public key (G…) to (public_key, db_row | None).
+
+    The returned ``db_row`` always includes ``stellar_secret_encrypted``
+    (fetched via ``get_worker_by_public_key``) so callers can decrypt and
+    sign transactions.
+
+    Returns:
+        (stellar_public_key, db_row_or_None)
+    Raises:
+        HTTPException 404 if the worker ID is not found.
+        HTTPException 400 if the identifier is neither a valid worker ID nor a Stellar key.
+    """
+    identifier = identifier.strip()
+
+    # Worker-ID format (e.g. NW-63A758A8)
+    if identifier.upper().startswith("NW-"):
+        row = get_by_worker_id(identifier.upper())
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Worker ID '{identifier}' not found.",
+            )
+        pk = row["stellar_public_key"]
+        # Re-fetch via public key so the row includes stellar_secret_encrypted
+        full_row = get_worker_by_public_key(pk)
+        return pk, full_row
+
+    # Otherwise treat as a Stellar public key
+    try:
+        pk = validate_stellar_public_key(identifier)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+
+    row = get_worker_by_public_key(pk)
+    return pk, row
+
+
+# ---------------------------------------------------------------------------
+# Static POST routes (must come BEFORE /{public_key} dynamic GET routes)
+# ---------------------------------------------------------------------------
+
+@router.post("/send", response_model=SendPaymentResponse)
+async def send_payment(
+    request: SendPaymentRequest,
+    payment_service: PaymentService = Depends(get_payment_service),
+):
+    """
+    Send KSH from one registered account to another.
+
+    Both `sender` and `destination` accept **either** a Stellar public key
+    (G…) **or** a system worker ID (NW-XXXX).  The backend resolves
+    worker IDs to public keys automatically.
+    """
+    # Resolve sender
+    sender_pk, sender_row = _resolve_account(request.sender)
+    if sender_row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sender account not found in the system.",
+        )
+
+    # Resolve destination
+    dest_pk, dest_row = _resolve_account(request.destination)
+
+    # Decrypt the sender's secret and build a Keypair
+    try:
+        secret = decrypt_secret(sender_row["stellar_secret_encrypted"])
+        sender_keypair = Keypair.from_secret(secret)
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to decrypt sender credentials: {e}",
+        )
+
+    # Sign & submit
+    try:
+        result = payment_service.send_payment(
+            sender_keypair=sender_keypair,
+            destination_public_key=dest_pk,
+            amount=request.amount,
+            memo=request.memo,
+        )
+        tx_hash = result.get("hash", "")
+        return SendPaymentResponse(
+            successful=result.get("successful", False),
+            tx_hash=tx_hash,
+            explorer_url=build_stellar_explorer_url(tx_hash),
+            amount=request.amount,
+            from_account=sender_pk,
+            to_account=dest_pk,
+            from_worker_id=sender_row.get("worker_id") if sender_row else None,
+            to_worker_id=dest_row.get("worker_id") if dest_row else None,
+        )
+    except StellarError as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=e.to_dict())
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/deposit/create", response_model=DepositCreateResponse)
+async def create_deposit(request: DepositCreateRequest):
+    """Return platform public key + unique memo for the user to send funds to."""
+    if not settings.stellar_platform_public:
+        raise HTTPException(status_code=500, detail="Platform not configured")
+
+    memo = f"dep-{uuid4().hex[:8]}"
+    expires = datetime.utcnow() + timedelta(hours=1)
+    return DepositCreateResponse(
+        platform_public=settings.stellar_platform_public,
+        memo=memo,
+        amount=request.amount,
+        expires_at=expires,
+    )
+
+
+@router.post("/deposit/verify")
+async def verify_deposit(request: DepositVerifyRequest, payment_service: PaymentService = Depends(get_payment_service)):
+    """Check if a deposit with the given memo has arrived."""
+    if not settings.stellar_platform_public:
+        raise HTTPException(status_code=500, detail="Platform not configured")
+    try:
+        payments = payment_service.get_payment_history(
+            public_key=settings.stellar_platform_public,
+            limit=50,
+        )
+        for p in payments:
+            if p.get("memo") == request.memo:
+                return {
+                    "verified": True,
+                    "amount": p.get("amount"),
+                    "from": p.get("from"),
+                    "transaction_hash": p.get("transaction_hash"),
+                }
+        return {"verified": False}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/withdraw")
+async def withdraw(request: WithdrawRequest, current_user=Depends(get_current_user), payment_service: PaymentService = Depends(get_payment_service)):
+    """Withdraw funds from platform to a destination account."""
+    try:
+        dest = validate_stellar_public_key(request.destination)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=e.to_dict())
+
+    if settings.stellar_platform_secret:
+        try:
+            kp = Keypair.from_secret(settings.stellar_platform_secret)
+            result = payment_service.send_payment(
+                sender_keypair=kp,
+                destination_public_key=dest,
+                amount=request.amount,
+            )
+            return {"submitted": True, "result": result}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    try:
+        tx = payment_service.build_payment_transaction(
+            source_public_key=settings.stellar_platform_public,
+            destination_public_key=dest,
+            amount=request.amount,
+        )
+        xdr = tx.to_xdr()
+        return {"unsigned_xdr": xdr}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/offramp", response_model=OfframpResponse)
+async def offramp_to_mpesa(
+    request: OfframpRequest,
+    payment_service: PaymentService = Depends(get_payment_service),
+):
+    """
+    Off-ramp: convert KSH on Stellar to KES on M-Pesa.
+
+    Flow:
+      1. Burn KSH by sending from the worker's Stellar wallet to the
+         platform's Stellar account.
+      2. Trigger an M-Pesa B2C payout to the worker's phone number via
+         IntaSend (or demo simulation when no credentials are configured).
+    """
+    from app.integrations.mpesa import mpesa_b2c_payout
+
+    sender_pk, sender_row = _resolve_account(request.sender)
+    if sender_row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sender account not found in the system.",
+        )
+
+    platform_public = settings.stellar_platform_public
+    if not platform_public:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Platform Stellar account not configured.",
+        )
+
+    stellar_tx_hash = None
+    stellar_explorer_url = None
+    try:
+        secret = decrypt_secret(sender_row["stellar_secret_encrypted"])
+        sender_keypair = Keypair.from_secret(secret)
+
+        result = payment_service.send_payment(
+            sender_keypair=sender_keypair,
+            destination_public_key=platform_public,
+            amount=request.amount,
+            memo="M-Pesa off-ramp",
+        )
+        stellar_tx_hash = result.get("hash", "")
+        stellar_explorer_url = build_stellar_explorer_url(stellar_tx_hash)
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Stellar burn transaction failed: {e}",
+        )
+
+    try:
+        mpesa_result = mpesa_b2c_payout(
+            phone=request.phone,
+            amount_ksh=float(request.amount),
+        )
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Stellar transfer succeeded (tx: {stellar_tx_hash}) but M-Pesa payout failed: {e}. Contact support.",
+        )
+
+    return OfframpResponse(
+        success=mpesa_result.success,
+        stellar_tx_hash=stellar_tx_hash,
+        stellar_explorer_url=stellar_explorer_url,
+        mpesa_transaction_id=mpesa_result.transaction_id,
+        phone=mpesa_result.phone,
+        amount_ksh=mpesa_result.amount_ksh,
+        amount_kes=mpesa_result.amount_kes,
+        exchange_rate=mpesa_result.exchange_rate,
+        mpesa_status=mpesa_result.status,
+        message=mpesa_result.message,
+        provider=mpesa_result.provider,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Dynamic GET routes (/{public_key} catch-all – MUST be last)
+# ---------------------------------------------------------------------------
+
 @router.get("/{public_key}", response_model=PaymentHistoryResponse)
 async def get_payment_history(
     public_key: str,
@@ -225,195 +507,3 @@ async def get_incoming_payments(
             detail=e.to_dict()
         )
 
-
-# --- Helper: resolve an identifier to a DB row + Stellar public key ---
-
-def _resolve_account(identifier: str) -> tuple[str, dict | None]:
-    """Resolve a worker ID (NW-…) or Stellar public key (G…) to (public_key, db_row | None).
-
-    The returned ``db_row`` always includes ``stellar_secret_encrypted``
-    (fetched via ``get_worker_by_public_key``) so callers can decrypt and
-    sign transactions.
-
-    Returns:
-        (stellar_public_key, db_row_or_None)
-    Raises:
-        HTTPException 404 if the worker ID is not found.
-        HTTPException 400 if the identifier is neither a valid worker ID nor a Stellar key.
-    """
-    identifier = identifier.strip()
-
-    # Worker-ID format (e.g. NW-63A758A8)
-    if identifier.upper().startswith("NW-"):
-        row = get_by_worker_id(identifier.upper())
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Worker ID '{identifier}' not found.",
-            )
-        pk = row["stellar_public_key"]
-        # Re-fetch via public key so the row includes stellar_secret_encrypted
-        full_row = get_worker_by_public_key(pk)
-        return pk, full_row
-
-    # Otherwise treat as a Stellar public key
-    try:
-        pk = validate_stellar_public_key(identifier)
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-
-    row = get_worker_by_public_key(pk)
-    return pk, row
-
-
-# --- Send payment (user-to-user) ---
-
-@router.post("/send", response_model=SendPaymentResponse)
-async def send_payment(
-    request: SendPaymentRequest,
-    payment_service: PaymentService = Depends(get_payment_service),
-):
-    """
-    Send XLM from one registered account to another.
-
-    Both `sender` and `destination` accept **either** a Stellar public key
-    (G…) **or** a system worker ID (NW-XXXX).  The backend resolves
-    worker IDs to public keys automatically.
-    """
-    # Resolve sender
-    sender_pk, sender_row = _resolve_account(request.sender)
-    if sender_row is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Sender account not found in the system.",
-        )
-
-    # Resolve destination
-    dest_pk, dest_row = _resolve_account(request.destination)
-
-    # Decrypt the sender's secret and build a Keypair
-    try:
-        secret = decrypt_secret(sender_row["stellar_secret_encrypted"])
-        sender_keypair = Keypair.from_secret(secret)
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to decrypt sender credentials: {e}",
-        )
-
-    # Sign & submit
-    try:
-        result = payment_service.send_payment(
-            sender_keypair=sender_keypair,
-            destination_public_key=dest_pk,
-            amount=request.amount,
-            memo=request.memo,
-        )
-        tx_hash = result.get("hash", "")
-        return SendPaymentResponse(
-            successful=result.get("successful", False),
-            tx_hash=tx_hash,
-            explorer_url=build_stellar_explorer_url(tx_hash),
-            amount=request.amount,
-            from_account=sender_pk,
-            to_account=dest_pk,
-            from_worker_id=sender_row.get("worker_id") if sender_row else None,
-            to_worker_id=dest_row.get("worker_id") if dest_row else None,
-        )
-    except StellarError as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=e.to_dict())
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# --- Deposit / withdraw ---
-
-
-@router.post("/deposit/create", response_model=DepositCreateResponse)
-async def create_deposit(request: DepositCreateRequest):
-    """Create a deposit invoice for the client to pay using Freighter.
-
-    The client should create a payment from their Freighter wallet to
-    `platform_public` and include the returned `memo`.
-    """
-    memo = f"deposit:{uuid4().hex}"
-    expires_at = datetime.utcnow() + timedelta(minutes=30)
-    return DepositCreateResponse(
-        platform_public=settings.stellar_platform_public or "",
-        memo=memo,
-        amount=request.amount,
-        expires_at=expires_at,
-    )
-
-
-@router.post("/deposit/verify")
-async def verify_deposit(request: DepositVerifyRequest, payment_service: PaymentService = Depends(get_payment_service)):
-    """Verify a deposit using the memo. Scans recent payments to platform.
-
-    This is a best-effort verification: it searches incoming payments to the
-    platform account and looks up the transaction memo for a match.
-    """
-    # fetch recent payments to platform
-    try:
-        payments = payment_service.get_incoming_payments(settings.stellar_platform_public, limit=200)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    stellar = payment_service.stellar
-    for p in payments:
-        tx_hash = p.get("transaction_hash")
-        if not tx_hash:
-            continue
-        try:
-            tx = stellar.server.transactions().transaction(tx_hash).call()
-            memo = tx.get("memo")
-            if memo == request.memo:
-                return {"found": True, "payment": p}
-        except Exception:
-            continue
-
-    raise HTTPException(status_code=404, detail="Deposit not found")
-
-
-@router.post("/withdraw")
-async def withdraw(request: WithdrawRequest, current_user=Depends(get_current_user), payment_service: PaymentService = Depends(get_payment_service)):
-    """Withdraw funds from platform to a destination account.
-
-    If the server has `stellar_platform_secret` configured it will sign
-    and submit the transaction automatically. Otherwise the unsigned
-    transaction XDR will be returned for external signing (e.g., via
-    Freighter).
-    """
-    # validate destination
-    try:
-        dest = validate_stellar_public_key(request.destination)
-    except ValidationError as e:
-        raise HTTPException(status_code=400, detail=e.to_dict())
-
-    # If platform secret is available, sign and send server-side
-    if settings.stellar_platform_secret:
-        try:
-            kp = Keypair.from_secret(settings.stellar_platform_secret)
-            result = payment_service.send_payment(
-                sender_keypair=kp,
-                destination_public_key=dest,
-                amount=request.amount,
-            )
-            return {"submitted": True, "result": result}
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-    # Otherwise build unsigned transaction and return XDR
-    try:
-        tx = payment_service.build_payment_transaction(
-            source_public_key=settings.stellar_platform_public,
-            destination_public_key=dest,
-            amount=request.amount,
-        )
-        xdr = tx.to_xdr()
-        return {"unsigned_xdr": xdr}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

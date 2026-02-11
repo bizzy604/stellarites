@@ -16,7 +16,7 @@ def _get_network_passphrase():
         return Network.TESTNET_NETWORK_PASSPHRASE
     return Network.PUBLIC_NETWORK_PASSPHRASE
 
-async def mint_review_nft(
+def mint_review_nft(
     reviewee_public_key: str,
     pdf_cid: str,
     asset_code_suffix: str, # Derived from SHA256(engagement_id + reviewer_id + timestamp)
@@ -81,7 +81,7 @@ async def mint_review_nft(
     # This prevents any further transactions from the issuer, making the NFT supply provably 1.
     tx_builder.append_set_options_op(
         source=issuer_public_key,
-        master_key_weight=0
+        master_weight=0
     )
 
     # Create Claimable Balance for 1 unit of the NFT to the reviewee
@@ -113,7 +113,7 @@ async def mint_review_nft(
     }
 
 
-async def get_reviews_for_account(stellar_public_key: str) -> list[dict]:
+def get_reviews_for_account(stellar_public_key: str) -> list[dict]:
     """
     Retrieves all review NFTs (Claimable Balances and owned assets)
     for a given Stellar public key.
