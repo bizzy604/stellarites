@@ -45,36 +45,121 @@ export default function Home() {
             <Navbar />
 
             {/* Hero Section (Non-sticky) */}
-            <section className="relative pt-32 pb-10 lg:pt-48 lg:pb-20 overflow-hidden">
-                <div className="absolute inset-0 tech-pattern z-0 pointer-events-none opacity-50"></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-background-dark z-0 pointer-events-none"></div>
+            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+                <div className="absolute inset-0 tech-pattern z-0 pointer-events-none opacity-30"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/50 to-white dark:via-background-dark/50 dark:to-background-dark z-0 pointer-events-none"></div>
 
-                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-primary text-xs font-semibold uppercase tracking-wide mb-6 border border-blue-100 dark:border-blue-800">
-                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                        Powered by Stellar Network
-                    </div>
-                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 text-text-light dark:text-white leading-tight">
-                        Secure payments for the <br className="hidden md:block" />
-                        <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">modern workforce</span>
-                    </h1>
-                    <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-600 dark:text-gray-300 mb-10">
-                        Paytrace leverages blockchain technology to provide instant, low-cost, and transparent cross-border payments for domestic workers and employers worldwide.
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <Link
-                            to="/auth/signup"
-                            className="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-medium rounded-lg text-white bg-text-light dark:bg-white dark:text-background-dark hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                        >
-                            Create Free Account
-                            <span className="material-icons-outlined ml-2 text-sm">arrow_forward</span>
-                        </Link>
-                        <a
-                            href="#features"
-                            className="inline-flex items-center justify-center px-8 py-3.5 border border-gray-200 dark:border-gray-700 text-base font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                        >
-                            How it works
-                        </a>
+                {/* Decorative Blobs */}
+                <div className="absolute top-20 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[100px] pointer-events-none mix-blend-multiply dark:mix-blend-screen opacity-50 animate-blob"></div>
+                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] pointer-events-none mix-blend-multiply dark:mix-blend-screen opacity-50 animate-blob animation-delay-2000"></div>
+
+                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+                        {/* Left Column: Content */}
+                        <div className="text-left space-y-8">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-primary text-xs font-semibold uppercase tracking-wide border border-blue-100 dark:border-blue-800 w-fit">
+                                <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                                Powered by Stellar Network
+                            </div>
+                            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-text-light dark:text-white leading-[1.1]">
+                                Secure payments for the <br />
+                                <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">modern workforce</span>
+                            </h1>
+                            <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-xl">
+                                Paytrace leverages blockchain technology to provide instant, low-cost, and transparent cross-border payments for domestic workers and employers worldwide.
+                            </p>
+
+                            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                                <Link
+                                    to="/auth/signup"
+                                    className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-lg font-bold rounded-xl text-white bg-primary hover:bg-primary-dark transition-all shadow-lg hover:shadow-primary/25 transform hover:-translate-y-0.5"
+                                >
+                                    Create Free Account
+                                    <span className="material-icons-outlined ml-2">arrow_forward</span>
+                                </Link>
+                                <a
+                                    href="#features"
+                                    className="inline-flex items-center justify-center px-8 py-4 border border-gray-200 dark:border-gray-700 text-lg font-medium rounded-xl text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    How it works
+                                </a>
+                            </div>
+
+                        </div>
+
+                        {/* Right Column: Visual */}
+                        <div className="relative lg:h-[600px] flex items-center justify-center perspective-1000">
+                            {/* Abstract 3D Representation */}
+                            <div className="relative w-full max-w-md aspect-square">
+                                {/* Main Gradient Sphere/Shape */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-blue-500 to-purple-600 rounded-full blur-3xl opacity-20 animate-pulse"></div>
+
+                                {/* Floating Cards / Elements */}
+                                <div className="relative z-10 w-full h-full">
+                                    {/* Mock Phone / App Interface */}
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-[500px] bg-slate-900 rounded-[3rem] border-8 border-slate-800 shadow-2xl overflow-hidden transform -rotate-12 hover:rotate-0 transition-transform duration-700">
+                                        <div className="absolute top-0 w-full h-full bg-slate-800/50">
+                                            {/* Screen Content Mock */}
+                                            <div className="p-6 space-y-6">
+                                                <div className="flex justify-between items-center text-white/50">
+                                                    <span className="text-xs">9:41</span>
+                                                    <div className="flex gap-1">
+                                                        <div className="w-4 h-4 bg-white/20 rounded-full"></div>
+                                                        <div className="w-4 h-4 bg-white/20 rounded-full"></div>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="text-2xl font-bold text-white">$2,450.00</div>
+                                                    <div className="text-sm text-white/60">Total Balance</div>
+                                                </div>
+                                                <div className="h-32 bg-gradient-to-br from-primary to-purple-600 rounded-2xl p-4 text-white">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="w-8 h-8 rounded-full bg-white/20"></div>
+                                                        <span className="text-xs font-mono">**** 4242</span>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-3">
+                                                    <div className="h-12 bg-white/5 rounded-xl flex items-center px-3 gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-green-500/20"></div>
+                                                        <div className="flex-1 h-2 bg-white/10 rounded-full"></div>
+                                                    </div>
+                                                    <div className="h-12 bg-white/5 rounded-xl flex items-center px-3 gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-blue-500/20"></div>
+                                                        <div className="flex-1 h-2 bg-white/10 rounded-full"></div>
+                                                    </div>
+                                                    <div className="h-12 bg-white/5 rounded-xl flex items-center px-3 gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-purple-500/20"></div>
+                                                        <div className="flex-1 h-2 bg-white/10 rounded-full"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Floating Element 1 - Success Notification */}
+                                    <div className="absolute top-20 -right-4 bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-xl flex items-center gap-3 animate-bounce-slow border border-gray-100 dark:border-gray-700">
+                                        <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                                            <span className="material-icons-outlined">check</span>
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-slate-900 dark:text-white">Payment Sent</div>
+                                            <div className="text-xs text-slate-500">Just now</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Floating Element 2 - User Avatar */}
+                                    <div className="absolute bottom-32 -left-8 bg-white dark:bg-slate-800 p-3 pr-6 rounded-full shadow-xl flex items-center gap-3 animate-bounce-slow animation-delay-1000 border border-gray-100 dark:border-gray-700">
+                                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                                            JS
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-slate-900 dark:text-white">John Smith</div>
+                                            <div className="text-xs text-slate-500">Employer</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -82,92 +167,126 @@ export default function Home() {
             {/* Sticky Animation Section */}
             <div ref={scrollContainerRef} className="relative z-20 h-auto md:h-[300vh] bg-transparent -mt-20 md:mt-0">
                 {/* This wrapper mimics the hero background to blend in if needed, or we rely on transparent */}
-                <div className="relative md:sticky md:top-0 md:h-screen flex flex-col justify-center items-center overflow-hidden py-10 md:py-0">
+                <div className="relative md:sticky md:top-0 md:h-screen flex flex-col justify-center overflow-hidden py-20 md:py-0">
 
-                    {/* Dashboard Preview */}
-                    <div className="relative w-full max-w-5xl px-4 sm:px-6 lg:px-8">
-                        <div className="rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-surface-dark transform transition-all duration-500 ease-out"
-                            style={{
-                                // Only apply transform on desktop for effect.
-                                // We use window width check assumption or standard CSS handling.
-                                transform: `perspective(1000px) rotateX(${Math.max(0, (1 - scrollProgress) * 5)}deg) scale(${0.95 + (scrollProgress * 0.05)})`,
-                                opacity: 1 // Keep it fully visible
-                            }}
-                        >
-                            <div className="absolute top-0 left-0 right-0 h-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 gap-2">
-                                <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                                <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                            {/* Left Column: Text Content */}
+                            <div className="order-2 lg:order-1 space-y-8 relative z-10">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-primary dark:text-blue-400 text-xs font-semibold uppercase tracking-wide border border-blue-100 dark:border-blue-800 w-fit">
+                                    <span className="material-icons-outlined text-sm">bolt</span>
+                                    Lightning Fast
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-text-light dark:text-white leading-tight">
+                                    Instant transfers <br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-600">across borders.</span>
+                                </h2>
+                                <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
+                                    No more waiting days for funds to clear. With Stellar's blockchain technology, payments are settled in 2-5 seconds, ensuring your family receives support when they need it most.
+                                </p>
+                                <ul className="space-y-4">
+                                    {[
+                                        'Settlement in 2-5 seconds',
+                                        'Zero hidden fees',
+                                        'Bank-grade security encryption',
+                                        'Real-time transaction tracking'
+                                    ].map((item, i) => (
+                                        <li key={i} className="flex items-center gap-3 text-gray-700 dark:text-gray-200 font-medium">
+                                            <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-primary dark:text-blue-400 flex items-center justify-center">
+                                                <span className="material-icons-outlined text-sm font-bold">check</span>
+                                            </div>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
-                            <div className="pt-10 pb-6 px-6 bg-surface-light dark:bg-surface-dark">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="col-span-2 space-y-4">
-                                        <div className="h-32 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between">
-                                            <div className="flex justify-between items-start">
-                                                <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                                <span className="text-green-500 text-sm font-medium">+2.4%</span>
-                                            </div>
-                                            <div className="h-8 w-32 bg-gray-800 dark:bg-gray-600 rounded"></div>
-                                        </div>
-                                        <div className="h-48 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
-                                            <div className="flex justify-between mb-4">
-                                                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                                                <div className="h-4 w-16 bg-gray-100 dark:bg-gray-700 rounded"></div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900"></div>
-                                                    <div className="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded"></div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900"></div>
-                                                    <div className="h-3 w-3/4 bg-gray-100 dark:bg-gray-700 rounded"></div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900"></div>
-                                                    <div className="h-3 w-5/6 bg-gray-100 dark:bg-gray-700 rounded"></div>
-                                                </div>
-                                            </div>
-                                        </div>
+
+                            {/* Right Column: Dashboard Preview */}
+                            <div className="order-1 lg:order-2 relative w-full">
+                                <div className="rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-surface-dark transform transition-all duration-500 ease-out"
+                                    style={{
+                                        // Only apply transform on desktop for effect.
+                                        // We use window width check assumption or standard CSS handling.
+                                        transform: `perspective(1000px) rotateY(-5deg) rotateX(${Math.max(0, (1 - scrollProgress) * 5)}deg) scale(${0.95 + (scrollProgress * 0.05)})`,
+                                        opacity: 1 // Keep it fully visible
+                                    }}
+                                >
+                                    <div className="absolute top-0 left-0 right-0 h-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                                        <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                        <div className="w-3 h-3 rounded-full bg-green-400"></div>
                                     </div>
+                                    <div className="pt-10 pb-6 px-6 bg-surface-light dark:bg-surface-dark">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div className="col-span-2 space-y-4">
+                                                <div className="h-32 bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                        <span className="text-green-500 text-sm font-medium">+2.4%</span>
+                                                    </div>
+                                                    <div className="h-8 w-32 bg-gray-800 dark:bg-gray-600 rounded"></div>
+                                                </div>
+                                                <div className="h-48 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4">
+                                                    <div className="flex justify-between mb-4">
+                                                        <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                                        <div className="h-4 w-16 bg-gray-100 dark:bg-gray-700 rounded"></div>
+                                                    </div>
+                                                    <div className="space-y-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900"></div>
+                                                            <div className="h-3 w-full bg-gray-100 dark:bg-gray-700 rounded"></div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900"></div>
+                                                            <div className="h-3 w-3/4 bg-gray-100 dark:bg-gray-700 rounded"></div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900"></div>
+                                                            <div className="h-3 w-5/6 bg-gray-100 dark:bg-gray-700 rounded"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                    {/* Animated Instant Transfer Card */}
-                                    <div className={`rounded-xl p-6 border flex flex-col items-center text-center justify-center transition-all duration-500 ${cardState === 'completed'
-                                        ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800'
-                                        : 'bg-primary/5 dark:bg-primary/10 border-primary/10'
-                                        }`}>
-                                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-sm transition-all duration-500 ${cardState === 'completed'
-                                            ? 'bg-green-100 text-green-600'
-                                            : 'bg-white dark:bg-gray-800 text-primary'
-                                            }`}>
-                                            <span className={`material-icons-outlined text-3xl transition-transform duration-500 ${cardState === 'processing' ? 'animate-spin' : ''
+                                            {/* Animated Instant Transfer Card */}
+                                            <div className={`rounded-xl p-6 border flex flex-col items-center text-center justify-center transition-all duration-500 ${cardState === 'completed'
+                                                ? 'bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800'
+                                                : 'bg-primary/5 dark:bg-primary/10 border-primary/10'
                                                 }`}>
-                                                {cardState === 'idle' && 'bolt'}
-                                                {cardState === 'processing' && 'autorenew'}
-                                                {cardState === 'completed' && 'check'}
-                                            </span>
-                                        </div>
-                                        <h3 className="font-semibold text-lg mb-1 dark:text-white">
-                                            {cardState === 'idle' && 'Instant Transfer'}
-                                            {cardState === 'processing' && 'Sending...'}
-                                            {cardState === 'completed' && 'Transfer Sent!'}
-                                        </h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {cardState === 'idle' && 'Processing on Stellar'}
-                                            {cardState === 'processing' && 'Confirming...'}
-                                            {cardState === 'completed' && 'Funds Available'}
-                                        </p>
+                                                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 shadow-sm transition-all duration-500 ${cardState === 'completed'
+                                                    ? 'bg-blue-100 text-primary'
+                                                    : 'bg-white dark:bg-gray-800 text-primary'
+                                                    }`}>
+                                                    <span className={`material-icons-outlined text-3xl transition-transform duration-500 ${cardState === 'processing' ? 'animate-spin' : ''
+                                                        }`}>
+                                                        {cardState === 'idle' && 'bolt'}
+                                                        {cardState === 'processing' && 'autorenew'}
+                                                        {cardState === 'completed' && 'check'}
+                                                    </span>
+                                                </div>
+                                                <h3 className="font-semibold text-lg mb-1 dark:text-white">
+                                                    {cardState === 'idle' && 'Instant Transfer'}
+                                                    {cardState === 'processing' && 'Sending...'}
+                                                    {cardState === 'completed' && 'Transfer Sent!'}
+                                                </h3>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                    {cardState === 'idle' && 'Processing on Stellar'}
+                                                    {cardState === 'processing' && 'Confirming...'}
+                                                    {cardState === 'completed' && 'Funds Available'}
+                                                </p>
 
-                                        <div className="mt-6 w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full transition-all duration-300 ease-out ${cardState === 'completed' ? 'bg-green-500' : 'bg-primary'
-                                                    }`}
-                                                style={{
-                                                    width: cardState === 'idle' ? '5%' :
-                                                        cardState === 'processing' ? `${30 + ((scrollProgress - 0.3) / 0.4) * 60}%` :
-                                                            '100%'
-                                                }}
-                                            ></div>
+                                                <div className="mt-6 w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full transition-all duration-300 ease-out ${cardState === 'completed' ? 'bg-primary' : 'bg-primary'
+                                                            }`}
+                                                        style={{
+                                                            width: cardState === 'idle' ? '5%' :
+                                                                cardState === 'processing' ? `${30 + ((scrollProgress - 0.3) / 0.4) * 60}%` :
+                                                                    '100%'
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -307,7 +426,6 @@ export default function Home() {
                     <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">No credit card required. Free to join.</p>
                 </div>
             </section>
-
             <Footer />
         </div>
     );

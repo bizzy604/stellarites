@@ -8,12 +8,16 @@ export default function SignIn() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Mock Login Logic: Check if identifier contains "admin" or "boss" to simulate employer
-        // Otherwise default to worker
-        // In a real app, the backend would return the role
-        const role = identifier.toLowerCase().includes('admin') || identifier.toLowerCase().includes('boss')
-            ? 'employer'
-            : 'worker';
+        // Check if user exists in local storage (simulating backend)
+        const users = JSON.parse(localStorage.getItem('paytrace_users') || '{}');
+        const user = users[identifier.toLowerCase()];
+
+        // Use stored role if found, otherwise fallback to mock logic
+        const role = user?.role || (
+            identifier.toLowerCase().includes('admin') || identifier.toLowerCase().includes('boss')
+                ? 'employer'
+                : 'worker'
+        );
 
         localStorage.setItem('paytrace_role', role);
         navigate('/dashboard');
@@ -37,15 +41,18 @@ export default function SignIn() {
             <main className="w-full max-w-md">
                 <div className="flex justify-center mb-8">
                     <Link to="/" className="flex items-center gap-3 transition-transform hover:scale-105">
+                        {/* Mobile Logo */}
                         <img
                             alt="Paytrace Logo"
-                            className="h-12 w-12 object-contain dark:invert"
+                            className="h-12 w-12 object-contain dark:invert md:hidden"
                             src="/logo.png"
-                            onError={(e) => {
-                                e.currentTarget.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuBGFGqzXXPCto2dqHJxGuq4Z7OqK7yc835QuZOBR7McmNycFb-7CIrZQUZaGhX9PFRd1rIN_qba7seWNw0q5aMfpN2l7aoi_otVfxR-nteGV3LM0yMfNaDY14oTVJYAEA2E0pq7bGZpEw6J84MrUOknQ5k-Ljo3JNdLQN4pGDEvYlCyH3sg_izvNWsaDImGKX_62D76_TiyH4gP2ySn-iJ-iJTTnIrRLGFnJ6GrdMx0fshzHTPnC03ZfzjJmJpRdiYhBcSWbuUsu-Bj";
-                            }}
                         />
-                        <span className="text-3xl font-bold tracking-tight text-text-light dark:text-white">Paytrace</span>
+                        {/* Desktop Logo */}
+                        <img
+                            alt="Paytrace Logo"
+                            className="h-16 w-48 object-contain dark:invert hidden md:block"
+                            src="/logo1.png"
+                        />
                     </Link>
                 </div>
                 <div className="bg-card-light dark:bg-card-dark rounded-xl shadow-xl border border-border-light dark:border-border-dark overflow-hidden transition-colors duration-200">

@@ -5,15 +5,30 @@ export default function SignUp() {
     const navigate = useNavigate();
     const [role, setRole] = useState<'worker' | 'employer'>('worker');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // Save role
+
+        const formData = new FormData(e.currentTarget);
+        const email = formData.get('email') as string;
+
+        if (email) {
+            // Get existing users or initialize empty object
+            const users = JSON.parse(localStorage.getItem('paytrace_users') || '{}');
+
+            // Add/Update user
+            users[email.toLowerCase()] = { role };
+
+            // Save back to localStorage
+            localStorage.setItem('paytrace_users', JSON.stringify(users));
+        }
+
+        // Save current session role
         localStorage.setItem('paytrace_role', role);
         navigate('/dashboard');
     };
 
     return (
-        <div className="bg-background-light dark:bg-background-dark font-body min-h-screen flex flex-col items-center justify-center p-4 transition-colors duration-200 relative">
+        <div className="bg-background-light dark:bg-background-dark font-body min-h-screen h-full flex flex-col items-center justify-center p-4 py-12 transition-colors duration-200 relative overflow-y-auto">
             {/* Back Button */}
             <Link to="/" className="absolute top-6 left-6 flex items-center gap-2 text-subtext-light dark:text-subtext-dark hover:text-primary transition-colors">
                 <span className="material-icons-outlined">arrow_back</span>
@@ -30,15 +45,18 @@ export default function SignUp() {
             <main className="w-full max-w-md">
                 <div className="flex justify-center mb-8">
                     <Link to="/" className="flex items-center gap-3 transition-transform hover:scale-105">
+                        {/* Mobile Logo */}
                         <img
                             alt="Paytrace Logo"
-                            className="h-12 w-12 object-contain dark:invert"
+                            className="h-12 w-12 object-contain dark:invert md:hidden"
                             src="/logo.png"
-                            onError={(e) => {
-                                e.currentTarget.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuBGFGqzXXPCto2dqHJxGuq4Z7OqK7yc835QuZOBR7McmNycFb-7CIrZQUZaGhX9PFRd1rIN_qba7seWNw0q5aMfpN2l7aoi_otVfxR-nteGV3LM0yMfNaDY14oTVJYAEA2E0pq7bGZpEw6J84MrUOknQ5k-Ljo3JNdLQN4pGDEvYlCyH3sg_izvNWsaDImGKX_62D76_TiyH4gP2ySn-iJ-iJTTnIrRLGFnJ6GrdMx0fshzHTPnC03ZfzjJmJpRdiYhBcSWbuUsu-Bj";
-                            }}
                         />
-                        <span className="text-3xl font-bold tracking-tight text-text-light dark:text-white">Paytrace</span>
+                        {/* Desktop Logo */}
+                        <img
+                            alt="Paytrace Logo"
+                            className="h-16 w-48 object-contain dark:invert hidden md:block"
+                            src="/logo1.png"
+                        />
                     </Link>
                 </div>
                 <div className="bg-card-light dark:bg-card-dark rounded-xl shadow-xl border border-border-light dark:border-border-dark overflow-hidden transition-colors duration-200">
