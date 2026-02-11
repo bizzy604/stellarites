@@ -18,7 +18,6 @@ export default function FundModal({ isOpen, onClose, publicKey, onSuccess }: Fun
     const [step, setStep] = useState<Step>('choose');
     const [amount, setAmount] = useState('');
     const [phone, setPhone] = useState(session?.phone ?? '');
-    const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [mpesaResult, setMpesaResult] = useState<{
         transaction_id: string;
@@ -46,7 +45,6 @@ export default function FundModal({ isOpen, onClose, publicKey, onSuccess }: Fun
     const handleFriendbot = async () => {
         setMethod('friendbot');
         setStep('processing');
-        setLoading(true);
         setMessage('');
         try {
             const res = await fundAccount(publicKey);
@@ -56,8 +54,6 @@ export default function FundModal({ isOpen, onClose, publicKey, onSuccess }: Fun
         } catch (err: unknown) {
             setMessage(err instanceof Error ? err.message : 'Funding failed');
             setStep('error');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -74,7 +70,6 @@ export default function FundModal({ isOpen, onClose, publicKey, onSuccess }: Fun
         }
 
         setStep('processing');
-        setLoading(true);
         setMessage('');
         setMpesaResult(null);
         try {
@@ -94,8 +89,6 @@ export default function FundModal({ isOpen, onClose, publicKey, onSuccess }: Fun
         } catch (err: unknown) {
             setMessage(err instanceof Error ? err.message : 'M-Pesa funding failed');
             setStep('error');
-        } finally {
-            setLoading(false);
         }
     };
 
