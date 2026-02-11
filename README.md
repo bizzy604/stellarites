@@ -15,6 +15,7 @@
 NannyChain is a Progressive Web Application (PWA) that creates portable, verifiable work histories for domestic workers in Kenya, anchored on Stellar blockchain for immutability. The platform addresses trust asymmetry between employers and workers by providing cryptographically verifiable employment records, payment documentation, and reputation scoring.
 
 **Core Value Proposition:**
+
 - **For Workers:** Portable professional credentials, verified payment history, career dignity
 - **For Employers:** Trustworthy worker verification, reduced hiring risk, transparent references
 - **For Ecosystem:** Formalization without legal burden, data-driven labor market insights
@@ -26,6 +27,7 @@ NannyChain is a Progressive Web Application (PWA) that creates portable, verifia
 ### 1.1 Problem Statement
 
 **Primary Problems:**
+
 1. **Trust Vacuum:** No standardized worker verification mechanism
 2. **Reputation Loss:** Workers cannot prove experience when changing employers
 3. **Payment Opacity:** No documentation of wages, making disputes difficult
@@ -33,6 +35,7 @@ NannyChain is a Progressive Web Application (PWA) that creates portable, verifia
 5. **Information Asymmetry:** Employers hire blind; workers have no leverage
 
 **Market Context:**
+
 - 2M+ domestic workers in Kenya
 - 85-90% informal arrangements
 - Legal minimum wage: 14,000 KES (rarely enforced)
@@ -61,6 +64,7 @@ NannyChain is a Progressive Web Application (PWA) that creates portable, verifia
 ### 1.3 Success Metrics (Hackathon)
 
 **Technical Success:**
+
 - [ ] Complete user registration flow (< 3 minutes)
 - [ ] QR code generation and verification working
 - [ ] At least 1 successful Stellar transaction recorded
@@ -68,12 +72,14 @@ NannyChain is a Progressive Web Application (PWA) that creates portable, verifia
 - [ ] Offline functionality operational
 
 **Demo Success:**
+
 - [ ] Live demonstration of full worker journey
 - [ ] Real-time QR scanning verification
 - [ ] Stellar transaction visible in explorer
 - [ ] Judges can interact with deployed app
 
 **Business Validation:**
+
 - [ ] 10+ demo worker profiles created
 - [ ] Clear adoption pathway articulated
 - [ ] Partnership strategy outlined
@@ -86,6 +92,7 @@ NannyChain is a Progressive Web Application (PWA) that creates portable, verifia
 ### 2.1 Primary Persona: Jane Wanjiku (Domestic Worker)
 
 **Demographics:**
+
 - Age: 28
 - Location: Kawangware, Nairobi
 - Education: Secondary school incomplete
@@ -94,18 +101,21 @@ NannyChain is a Progressive Web Application (PWA) that creates portable, verifia
 - Income: 16,000 KES/month
 
 **Pain Points:**
+
 - Has worked for 3 families, no documented proof
 - Relies on verbal references (previous employers don't always answer calls)
 - Lost job opportunity because couldn't prove experience
 - Wants professional recognition but feels stigmatized
 
 **Goals:**
+
 - Build verifiable work history
 - Get higher-paying jobs
 - Have proof of reliability
 - Professional identity
 
 **Technical Context:**
+
 - Uses WhatsApp daily
 - Uses M-Pesa for all payments
 - Limited data budget (~1GB/month)
@@ -114,6 +124,7 @@ NannyChain is a Progressive Web Application (PWA) that creates portable, verifia
 ### 2.2 Secondary Persona: Sarah Muthoni (Employer)
 
 **Demographics:**
+
 - Age: 34
 - Location: Kilimani, Nairobi
 - Occupation: Marketing manager
@@ -121,18 +132,21 @@ NannyChain is a Progressive Web Application (PWA) that creates portable, verifia
 - Device: iPhone 13
 
 **Pain Points:**
+
 - Hired 3 nannies in 2 years (reliability issues)
 - Difficult to verify references
 - Worried about child safety
 - Wants trustworthy, experienced caregiver
 
 **Goals:**
+
 - Verify worker experience quickly
 - Access to reliable references
 - Peace of mind
 - Fair wage benchmarking
 
 **Technical Context:**
+
 - Heavy smartphone user
 - Comfortable with apps
 - Values convenience
@@ -150,6 +164,7 @@ NannyChain is a Progressive Web Application (PWA) that creates portable, verifia
 As a domestic worker, I want to create a verified profile so that I can prove my experience to potential employers.
 
 **Acceptance Criteria:**
+
 - [ ] Form validation: name (required), phone (required, Kenyan format)
 - [ ] Phone verification via SMS OTP (6-digit code)
 - [ ] Profile photo upload (max 2MB, JPG/PNG)

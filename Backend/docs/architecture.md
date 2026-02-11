@@ -16,9 +16,9 @@ This document describes the current backend implementation so the team stays ali
                     │                                            │                                            │
                     ▼                                            ▼                                            ▼
          ┌──────────────────┐                        ┌──────────────────┐                        ┌──────────────────┐
-         │  DB (PostgreSQL) │                        │  Redis           │                        │  Integrations    │
-         │  workers table   │                        │  USSD sessions   │                        │  Stellar, AT     │
-         │  repositories   │                        │  ussd:session:*  │                        │  (M-Pesa later)  │
+         │  DB (PostgreSQL) │                        │  Redis (opt.)    │                        │  Integrations    │
+         │  workers table   │                        │  or in-memory    │                        │  Stellar, AT     │
+         │  repositories   │                        │  USSD sessions   │                        │  (M-Pesa later)  │
          └──────────────────┘                        └──────────────────┘                        └──────────────────┘
 ```
 
@@ -77,7 +77,7 @@ DB connection from `app.db.get_connection()` using `Config.DATABASE_URL`.
 
 ### USSD handler (`app/ussd/handler.py`)
 
-- **get_session(session_id)** / **set_session(session_id, data)** — Redis get/set for key `ussd:session:{sessionId}` with TTL from config.
+- **get_session(session_id)** / **set_session(session_id, data)** — Session storage: Redis (key `ussd:session:{sessionId}`) when `REDIS_URL` is set, else in-memory. TTL from config. Redis is optional.
 - **handle_ussd(session_id, phone_number, text)** — Implements the menu:
   - Empty `text` → main menu (1 Create account, 2 Sign in, 3 Exit).
   - Step “register_phone”: user sends phone → `create_account(phone)` → END with Worker ID (and optional SMS).
@@ -123,7 +123,7 @@ Indexes on `phone` and `worker_id`.
 | Variable                 | Required for | Description                                      |
 |--------------------------|--------------|--------------------------------------------------|
 | DATABASE_URL             | All          | PostgreSQL connection string                     |
-| REDIS_URL                | USSD         | Redis connection string                          |
+| REDIS_URL                | Optional     | Redis for USSD sessions; if unset, in-memory store used |
 | ENCRYPTION_KEY           | Stellar      | Any string; used to derive Fernet key            |
 | AT_USERNAME, AT_API_KEY  | SMS          | Africa’s Talking                                 |
 | USSD_API_KEY             | Optional     | If set, required on POST /ussd                   |

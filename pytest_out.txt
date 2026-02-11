@@ -1,0 +1,26 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.2, pytest-7.4.3, pluggy-1.6.0 -- C:\Users\Administrator\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Administrator\Downloads\stellarites\Backend
+configfile: pyproject.toml
+plugins: anyio-4.9.0, langsmith-0.3.32, opik-1.10.4, cov-4.1.0, mock-3.12.0
+collecting ... collected 9 items
+
+tests/test_health.py::test_health_returns_ok FAILED                      [ 11%]
+
+================================== FAILURES ===================================
+___________________________ test_health_returns_ok ____________________________
+tests\test_health.py:9: in test_health_returns_ok
+    assert data == {"status": "ok"}
+E   AssertionError: assert {'status': 'healthy'} == {'status': 'ok'}
+E     Differing items:
+E     {'status': 'healthy'} != {'status': 'ok'}
+E     Full diff:
+E     - {'status': 'ok'}
+E     ?             ^^
+E     + {'status': 'healthy'}
+E     ?             ^^^^^^^
+=========================== short test summary info ===========================
+FAILED tests/test_health.py::test_health_returns_ok - AssertionError: assert ...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+============================== 1 failed in 0.44s ==============================

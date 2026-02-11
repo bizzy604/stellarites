@@ -1,28 +1,58 @@
 """USSD session and menu handler. Africa's Talking callback logic."""
 import json
-import redis
+import time
 from app.config import Config
 from app.services.user_service import create_account
 
+# In-memory session store when REDIS_URL is not set. Key -> (data dict, expiry timestamp).
+_memory_sessions: dict[str, tuple[dict, float]] = {}
+
+
+def _use_redis() -> bool:
+    """True if Redis is configured."""
+    url = (Config.REDIS_URL or "").strip()
+    return bool(url)
+
 
 def _redis():
+    import redis
     return redis.from_url(Config.REDIS_URL)
 
 
 def get_session(session_id: str) -> dict:
-    key = f"ussd:session:{session_id}"
-    data = _redis().get(key)
-    if not data:
-        return {}
-    try:
-        return json.loads(data)
-    except (json.JSONDecodeError, TypeError):
-        return {}
+    if _use_redis():
+        key = f"ussd:session:{session_id}"
+        try:
+            data = _redis().get(key)
+        except Exception:
+            return {}
+        if not data:
+            return {}
+        try:
+            return json.loads(data)
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    # In-memory
+    now = time.time()
+    if session_id in _memory_sessions:
+        data, expiry = _memory_sessions[session_id]
+        if now < expiry:
+            return dict(data)
+        del _memory_sessions[session_id]
+    return {}
 
 
 def set_session(session_id: str, data: dict) -> None:
-    key = f"ussd:session:{session_id}"
-    _redis().setex(key, Config.USSD_SESSION_TTL, json.dumps(data))
+    if _use_redis():
+        key = f"ussd:session:{session_id}"
+        try:
+            _redis().setex(key, Config.USSD_SESSION_TTL, json.dumps(data))
+        except Exception:
+            pass
+        return
+    # In-memory with TTL
+    expiry = time.time() + Config.USSD_SESSION_TTL
+    _memory_sessions[session_id] = (dict(data), expiry)
 
 
 def _normalize_phone(raw: str) -> str:

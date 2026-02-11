@@ -105,7 +105,7 @@ cp .env.example .env
 Edit `.env`. Required for current features:
 
 - `DATABASE_URL` — PostgreSQL connection string
-- `REDIS_URL` — Redis connection string
+- `REDIS_URL` — Optional. Redis connection string for USSD session storage. If unset, in-memory store is used.
 - `ENCRYPTION_KEY` — Any string; used to derive key for encrypting Stellar secrets
 
 Optional:
@@ -176,11 +176,17 @@ API base: `http://localhost:5000`. Swagger UI: `http://localhost:5000/docs`
 
 ---
 
-## Redis (USSD sessions)
+## Redis (USSD sessions) — optional
+
+**Redis is not required.** If `REDIS_URL` is not set, USSD uses an in-memory session store (sessions work for dev/single-instance but are lost on restart and not shared across instances).
+
+When Redis is used:
 
 - Key: `ussd:session:{sessionId}`
 - TTL: from `USSD_SESSION_TTL` (default 180 seconds)
 - Value: JSON with `step` and any flow state
+
+Full USSD flow: see [docs/ussd_flow.md](docs/ussd_flow.md).
 
 ---
 
@@ -213,6 +219,7 @@ When implemented, these should use the same services/repositories:
 ## Documentation
 
 - **Architecture and data flow**: `docs/architecture.md`
+- **USSD flow** (step-by-step, session storage): `docs/ussd_flow.md`
 - **Environment variables**: `.env.example` (with comments)
 
 ---
