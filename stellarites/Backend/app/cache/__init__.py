@@ -1,1 +1,0 @@
-# Cache helpers (Redis) package

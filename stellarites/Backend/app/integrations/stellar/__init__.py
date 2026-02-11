@@ -1,1 +1,0 @@
-# Stellar integration package
