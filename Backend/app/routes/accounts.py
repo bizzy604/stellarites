@@ -10,8 +10,10 @@ import requests as http_requests
 
 from app.services.user_service import create_account
 from app.services.account import AccountService
+from app.services.payments import get_payment_service
 from app.db.repositories import get_worker_by_phone, get_worker_by_public_key, get_by_worker_id
-from app.config import Config
+from app.config import Config, get_settings
+from stellar_sdk import Keypair
 
 router = APIRouter(prefix="/accounts", tags=["Accounts"])
 
@@ -266,3 +268,87 @@ def fund_account(public_key: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Friendbot request failed: {e}",
         )
+
+
+# ---------------------------------------------------------------------------
+# M-Pesa on-ramp (fund via M-Pesa)
+# ---------------------------------------------------------------------------
+
+class FundMpesaRequest(BaseModel):
+    amount: float          # KES amount to pay via M-Pesa
+    phone: str             # M-Pesa phone number
+
+
+class FundMpesaResponse(BaseModel):
+    funded: bool
+    message: str
+    transaction_id: str = ""
+    amount_ksh: str = "0"
+    amount_kes: str = "0"
+    provider: str = "demo"
+
+
+@router.post("/{public_key}/fund-mpesa", response_model=FundMpesaResponse)
+def fund_account_mpesa(public_key: str, request: FundMpesaRequest):
+    """
+    Fund a Stellar account via M-Pesa on-ramp.
+
+    User pays KES via M-Pesa (STK Push); platform credits their account with
+    equivalent KSH.  In demo mode (no IntaSend credentials), simulates the
+    collection and immediately credits the account.
+    """
+    from app.integrations.mpesa.stk_push import mpesa_collect
+
+    settings = get_settings()
+    if not settings.stellar_platform_public or not settings.stellar_platform_secret:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Platform Stellar account not configured for M-Pesa funding.",
+        )
+
+    if request.amount < 10:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Minimum M-Pesa amount is 10 KES.",
+        )
+
+    if request.amount > 150000:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum M-Pesa amount is 150,000 KES.",
+        )
+
+    # Step 1: Collect via M-Pesa (STK Push or demo)
+    result = mpesa_collect(phone=request.phone, amount_kes=request.amount)
+
+    if not result.success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.message,
+        )
+
+    # Step 2: Credit Stellar account from platform
+    amount_ksh_str = f"{result.amount_ksh:.7f}"
+    try:
+        ps = get_payment_service()
+        kp = Keypair.from_secret(settings.stellar_platform_secret)
+        ps.send_payment(
+            sender_keypair=kp,
+            destination_public_key=public_key,
+            amount=amount_ksh_str,
+            memo="M-Pesa on-ramp",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"M-Pesa collection succeeded but Stellar credit failed: {e}. Contact support.",
+        )
+
+    return FundMpesaResponse(
+        funded=True,
+        message=f"Account credited with {result.amount_ksh:,.2f} KSH. {result.message}",
+        transaction_id=result.transaction_id,
+        amount_ksh=str(result.amount_ksh),
+        amount_kes=str(result.amount_kes),
+        provider=result.provider,
+    )

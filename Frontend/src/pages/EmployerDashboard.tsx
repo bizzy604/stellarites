@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getSession, clearSession } from '../services/session';
-import { getBalance, resolveAccount, fundAccount } from '../services/accounts';
+import { getBalance, resolveAccount } from '../services/accounts';
 import { getPaymentHistory, sendPayment } from '../services/payments';
 import { getEmployerSchedules, createSchedule, updateScheduleStatus, getEmployerClaims, updateClaimStatus } from '../services/schedules';
 import { getEligibleReviewees, submitReview, getReviewsFor, getUserRating } from '../services/reviews';
+import FundModal from '../components/FundModal';
 import type { PaymentRecord, BalanceItem, SendPaymentResponse, ResolveResponse, Schedule, PaymentClaim, EligibleReviewee, UserReview, UserRating } from '../types';
 
 export default function EmployerDashboard() {
@@ -21,28 +22,17 @@ export default function EmployerDashboard() {
     // Copy-to-clipboard feedback
     const [copiedField, setCopiedField] = useState('');
 
-    // ── Friendbot funding ─────────────────────────────────────────
-    const [funding, setFunding] = useState(false);
-    const [fundMsg, setFundMsg] = useState('');
+    // ── Add Funds modal ────────────────────────────────────────────
+    const [showFundModal, setShowFundModal] = useState(false);
 
-    const handleFund = async () => {
-        if (!publicKey || funding) return;
-        setFunding(true);
-        setFundMsg('');
-        try {
-            const res = await fundAccount(publicKey);
-            setFundMsg(res.message);
-            // Refresh balance
-            const balRes = await getBalance(publicKey);
-            setBalances(balRes.balances);
-            const xlm = balRes.balances.find(b => b.asset_type === 'native');
-            setBalance(xlm ? parseFloat(xlm.balance) : 0);
-        } catch (err: unknown) {
-            setFundMsg(err instanceof Error ? err.message : 'Funding failed.');
-        } finally {
-            setFunding(false);
-            setTimeout(() => setFundMsg(''), 5000);
-        }
+    const refreshBalance = async () => {
+        if (!publicKey) return;
+        const balRes = await getBalance(publicKey);
+        setBalances(balRes.balances);
+        const native = balRes.balances.find(b => b.asset_type === 'native');
+        setBalance(native ? parseFloat(native.balance) : 0);
+        const histRes = await getPaymentHistory(publicKey, 20);
+        setTransactions(histRes.payments.map(p => ({ ...p, type: p.to_account === publicKey ? 'income' : 'expense' })));
     };
 
     // ── Live data ────────────────────────────────────────────────
@@ -441,28 +431,13 @@ export default function EmployerDashboard() {
                                             {showBalance ? 'Hide Balance' : 'Show Balance'}
                                         </button>
                                         <button
-                                            onClick={handleFund}
-                                            disabled={funding}
-                                            className="flex-1 bg-primary hover:bg-primary-dark text-white py-2.5 px-4 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            onClick={() => setShowFundModal(true)}
+                                            className="flex-1 bg-primary hover:bg-primary-dark text-white py-2.5 px-4 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
                                         >
-                                            {funding ? (
-                                                <>
-                                                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                                    Funding…
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <span className="material-icons-outlined text-sm">add</span>
-                                                    Add Funds
-                                                </>
-                                            )}
+                                            <span className="material-icons-outlined text-sm">add</span>
+                                            Add Funds
                                         </button>
                                     </div>
-                                    {fundMsg && (
-                                        <p className={`text-xs mt-3 text-center ${fundMsg.toLowerCase().includes('fail') || fundMsg.toLowerCase().includes('error') ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                                            {fundMsg}
-                                        </p>
-                                    )}
                                 </div>
                             </div>
 
@@ -1197,6 +1172,13 @@ export default function EmployerDashboard() {
                     </button>
                 </div>
             </main>
+
+            <FundModal
+                isOpen={showFundModal}
+                onClose={() => setShowFundModal(false)}
+                publicKey={publicKey}
+                onSuccess={refreshBalance}
+            />
         </div>
     );
 }

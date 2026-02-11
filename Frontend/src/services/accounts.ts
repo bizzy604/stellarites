@@ -38,3 +38,18 @@ export function resolveAccount(identifier: string) {
 export function fundAccount(publicKey: string) {
   return api.post<{ funded: boolean; message: string }>(`/api/v1/accounts/${publicKey}/fund`, {});
 }
+
+/** Fund a Stellar account via M-Pesa on-ramp (pay KES, receive KSH). */
+export function fundAccountMpesa(
+  publicKey: string,
+  data: { amount: number; phone: string }
+) {
+  return api.post<{
+    funded: boolean;
+    message: string;
+    transaction_id: string;
+    amount_ksh: string;
+    amount_kes: string;
+    provider: string;
+  }>(`/api/v1/accounts/${publicKey}/fund-mpesa`, data);
+}
