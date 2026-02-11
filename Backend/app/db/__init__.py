@@ -5,5 +5,10 @@ from app.config import Config
 
 
 def get_connection():
-    """Return a DB connection. Caller should close or use as context manager."""
+    """
+    Create and return a new PostgreSQL database connection using the configured DSN.
+    
+    Returns:
+        connection (psycopg2.extensions.connection): A psycopg2 connection configured with RealDictCursor so query rows are returned as dicts. Caller is responsible for closing the connection or using it as a context manager.
+    """
     return psycopg2.connect(Config.DATABASE_URL, cursor_factory=RealDictCursor)

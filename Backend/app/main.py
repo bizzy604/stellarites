@@ -18,7 +18,12 @@ USSD_API_KEY = Config.USSD_API_KEY or None
 
 @app.get("/health")
 def health():
-    """Health check."""
+    """
+    Provide a health-check response for the service.
+    
+    Returns:
+        JSONResponse: A JSON response with content {"status": "ok"} indicating the service is healthy.
+    """
     return JSONResponse(content={"status": "ok"})
 
 
@@ -29,7 +34,18 @@ def ussd(
     text: str = Form(""),
     authorization: str | None = Header(None),
 ):
-    """Africa's Talking USSD callback. Form: sessionId, phoneNumber, text."""
+    """
+    Handle Africa's Talking USSD callback and return the USSD response as plain text.
+    
+    Parameters:
+        sessionId (str): USSD session identifier supplied by the gateway.
+        phoneNumber (str): Caller phone number as provided by the gateway.
+        text (str): Text payload representing the user's current USSD input.
+        authorization (str | None): Optional `Authorization` header value; when `USSD_API_KEY` is set this is validated before processing.
+    
+    Returns:
+        PlainTextResponse: The USSD response text to send back to the gateway, or an empty body with status code 403 when authorization fails.
+    """
     if USSD_API_KEY:
         token = (authorization or "").replace("Bearer ", "").strip()
         if token != USSD_API_KEY:
