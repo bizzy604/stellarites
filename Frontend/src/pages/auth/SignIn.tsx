@@ -1,26 +1,43 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { login } from '../../services/accounts';
+import { saveSession, clearSession } from '../../services/session';
 
 export default function SignIn() {
     const navigate = useNavigate();
     const [identifier, setIdentifier] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Clear any stale session so the user starts fresh
+    useEffect(() => { clearSession(); }, []);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
 
-        // Check if user exists in local storage (simulating backend)
-        const users = JSON.parse(localStorage.getItem('paytrace_users') || '{}');
-        const user = users[identifier.toLowerCase()];
+        if (!identifier.trim()) return;
 
-        // Use stored role if found, otherwise fallback to mock logic
-        const role = user?.role || (
-            identifier.toLowerCase().includes('admin') || identifier.toLowerCase().includes('boss')
-                ? 'employer'
-                : 'worker'
-        );
+        setLoading(true);
+        try {
+            const result = await login({ phone: identifier.trim() });
 
-        localStorage.setItem('paytrace_role', role);
-        navigate('/dashboard');
+            saveSession({
+                worker_id: result.worker_id,
+                stellar_public_key: result.stellar_public_key,
+                phone: result.phone,
+                name: result.name,
+                role: result.role as 'worker' | 'employer',
+            });
+
+            navigate('/dashboard');
+        } catch (err: unknown) {
+            const message =
+                err instanceof Error ? err.message : 'Login failed.';
+            setError(message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -65,49 +82,30 @@ export default function SignIn() {
 
                     <form className="px-8 pb-10 space-y-5" onSubmit={handleSubmit}>
                         <div>
-                            <label htmlFor="identifier" className="block text-sm font-medium text-text-light dark:text-text-dark mb-1.5">Phone number or Email</label>
+                            <label htmlFor="identifier" className="block text-sm font-medium text-text-light dark:text-text-dark mb-1.5">Phone Number</label>
                             <div className="relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="material-icons-outlined text-gray-400 text-lg">person_outline</span>
+                                    <span className="material-icons-outlined text-gray-400 text-lg">phone</span>
                                 </div>
                                 <input
                                     id="identifier"
                                     name="identifier"
-                                    type="text"
-                                    autoComplete="email"
+                                    type="tel"
+                                    autoComplete="tel"
                                     required
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
                                     className="block w-full pl-10 pr-3 py-2.5 border border-border-light dark:border-border-dark rounded-lg leading-5 bg-gray-50 dark:bg-gray-800 text-text-light dark:text-text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
-                                    placeholder="user@example.com or +1234567890"
+                                    placeholder="+254 712 345 678"
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <div className="flex items-center justify-between">
-                                <label htmlFor="password" className="block text-sm font-medium text-text-light dark:text-text-dark mb-1.5">Password</label>
-                                <div className="text-sm">
-                                    <a href="#" className="font-medium text-primary hover:text-primary-hover transition-colors">
-                                        Forgot password?
-                                    </a>
-                                </div>
+                        {error && (
+                            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 rounded-lg px-4 py-2">
+                                {error}
                             </div>
-                            <div className="relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="material-icons-outlined text-gray-400 text-lg">lock_outline</span>
-                                </div>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    autoComplete="current-password"
-                                    required
-                                    className="block w-full pl-10 pr-3 py-2.5 border border-border-light dark:border-border-dark rounded-lg leading-5 bg-gray-50 dark:bg-gray-800 text-text-light dark:text-text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
-                                    placeholder="••••••••"
-                                />
-                            </div>
-                        </div>
+                        )}
 
                         <div className="flex items-start">
                             <div className="flex items-center h-5">
@@ -128,9 +126,10 @@ export default function SignIn() {
                         <div>
                             <button
                                 type="submit"
-                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform hover:scale-[1.01]"
+                                disabled={loading}
+                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Sign In
+                                {loading ? 'Signing In…' : 'Sign In'}
                             </button>
                         </div>
                     </form>

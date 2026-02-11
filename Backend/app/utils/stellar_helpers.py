@@ -1,10 +1,13 @@
 from typing import Optional
+from app.config import Config
 
 
 def build_stellar_explorer_url(tx_hash: Optional[str]) -> str:
+    """Build a Stellar explorer link. Uses testnet or public based on config."""
     if not tx_hash:
         return ""
-    return f"https://stellar.expert/explorer/public/tx/{tx_hash}"
+    network = "testnet" if Config.STELLAR_NETWORK.upper() == "TESTNET" else "public"
+    return f"https://stellar.expert/explorer/{network}/tx/{tx_hash}"
 
 
 def parse_memo(memo: Optional[str]) -> Optional[str]:

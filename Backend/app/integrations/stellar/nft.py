@@ -1,5 +1,5 @@
 """Stellar NFT (review certificate) creation and retrieval using Claimable Balances."""
-import asyncio
+import base64
 from stellar_sdk import Keypair, Network, Server, TransactionBuilder, Asset
 from stellar_sdk.exceptions import Ed25519PublicKeyInvalidError, NotFoundError
 from app.config import Config
@@ -39,7 +39,7 @@ async def mint_review_nft(
         raise ValueError("STELLAR_FUNDING_SECRET is not configured for funding new accounts.")
 
     funding_keypair = Keypair.from_secret(Config.STELLAR_FUNDING_SECRET)
-    funding_account = await server.load_account(funding_keypair.public_key)
+    funding_account = server.load_account(funding_keypair.public_key)
 
     # Asset code is RVW + unique suffix (max 12 chars total)
     asset_code = f"RVW{asset_code_suffix[:9]}".upper()
@@ -101,7 +101,7 @@ async def mint_review_nft(
     transaction.sign(issuer_keypair)
 
     # Submit to Horizon
-    response = await server.submit_transaction(transaction)
+    response = server.submit_transaction(transaction)
 
     explorer_url = f"https://stellar.expert/explorer/{'testnet' if Config.STELLAR_NETWORK == 'TESTNET' else 'public'}/tx/{response['hash']}"
 
@@ -115,77 +115,88 @@ async def mint_review_nft(
 
 async def get_reviews_for_account(stellar_public_key: str) -> list[dict]:
     """
-    Retrieves all review NFTs (Claimable Balances and owned assets) for a given Stellar public key.
-    Uses asyncio.gather for high performance.
+    Retrieves all review NFTs (Claimable Balances and owned assets)
+    for a given Stellar public key.
+
+    Uses the synchronous stellar-sdk Server (`.call()` not `.execute()`).
+    Returns an empty list if the account doesn't exist on the network yet.
     """
     server = _get_horizon_server()
-    
-    # 1. Fetch Claimable Balances and Owned Assets in parallel
-    tasks = [
-        server.claimable_balances().for_claimant(stellar_public_key).execute(),
-        server.load_account(stellar_public_key)
-    ]
-    
-    try:
-        cb_results, account_details = await asyncio.gather(*tasks, return_exceptions=True)
-    except Exception:
-        cb_results, account_details = [], None
 
-    # Handle cases where account might not exist yet
-    if isinstance(account_details, Exception):
-        account_details = None
-    if isinstance(cb_results, Exception):
+    # 1. Fetch Claimable Balances
+    try:
+        cb_results = server.claimable_balances().for_claimant(stellar_public_key).call()
+    except Exception:
         cb_results = {"_embedded": {"records": []}}
 
-    issuer_fetch_tasks = []
-    metadata_context = [] # To keep track of which asset corresponds to which fetch task
+    # 2. Fetch account details (for owned assets)
+    account_details = None
+    try:
+        account_details = server.accounts().account_id(stellar_public_key).call()
+    except Exception:
+        pass  # Account may not exist on network
+
+    issuer_keys: list[str] = []
+    metadata_context: list[dict] = []
 
     # Identify Claimable Review NFTs
     for cb in cb_results.get("_embedded", {}).get("records", []):
-        if cb["asset_type"] == "credit_alphanum12" and cb["asset_code"].startswith("RVW"):
-            issuer_fetch_tasks.append(server.load_account(cb["asset_issuer"]))
-            metadata_context.append({"asset_code": cb["asset_code"], "status": "claimable", "issuer": cb["asset_issuer"]})
+        asset_code = cb.get("asset", "").split(":")[0] if ":" in cb.get("asset", "") else cb.get("asset_code", "")
+        asset_type = cb.get("asset_type", "")
+        issuer = cb.get("asset", "").split(":")[-1] if ":" in cb.get("asset", "") else cb.get("asset_issuer", "")
+
+        if not asset_code:
+            # Claimable balance asset field may be "CODE:ISSUER" format
+            raw = cb.get("asset", "")
+            if ":" in raw:
+                asset_code, issuer = raw.split(":", 1)
+
+        if asset_code.startswith("RVW"):
+            issuer_keys.append(issuer)
+            metadata_context.append({"asset_code": asset_code, "status": "claimable", "issuer": issuer})
 
     # Identify Owned Review NFTs
     if account_details:
-        for balance in account_details.balances:
-            if balance.asset_type == "credit_alphanum12" and balance.asset_code.startswith("RVW") and balance.balance == "1":
-                issuer_fetch_tasks.append(server.load_account(balance.asset_issuer))
-                metadata_context.append({"asset_code": balance.asset_code, "status": "owned", "issuer": balance.asset_issuer})
+        for balance in account_details.get("balances", []):
+            ac = balance.get("asset_code", "")
+            if ac.startswith("RVW") and balance.get("balance") == "1.0000000":
+                issuer = balance.get("asset_issuer", "")
+                issuer_keys.append(issuer)
+                metadata_context.append({"asset_code": ac, "status": "owned", "issuer": issuer})
 
-    # 2. Fetch all issuer account data in parallel (The bottleneck)
-    if not issuer_fetch_tasks:
+    if not issuer_keys:
         return []
 
-    issuer_accounts = await asyncio.gather(*issuer_fetch_tasks, return_exceptions=True)
-    
-    reviews = []
-    for i, issuer_acc in enumerate(issuer_accounts):
-        if isinstance(issuer_acc, Exception):
+    # 3. Fetch issuer account data for each NFT
+    reviews: list[dict] = []
+    for i, issuer_pk in enumerate(issuer_keys):
+        try:
+            issuer_acc = server.accounts().account_id(issuer_pk).call()
+            raw_data = issuer_acc.get("data", {})
+            # Decode base64 values
+            decoded = {}
+            for k, v in raw_data.items():
+                try:
+                    decoded[k] = base64.b64decode(v).decode("utf-8")
+                except Exception:
+                    pass
+
+            review_data = _extract_review_data_from_manage_data(decoded)
+            if review_data and review_data.get("reviewee") == stellar_public_key:
+                ctx = metadata_context[i]
+                review_data.update({
+                    "asset_code": ctx["asset_code"],
+                    "issuer_public_key": ctx["issuer"],
+                    "status": ctx["status"],
+                })
+                reviews.append(review_data)
+        except Exception:
             continue
-            
-        review_data = _extract_review_data_from_manage_data(issuer_acc.data)
-        if review_data and review_data.get("reviewee") == stellar_public_key:
-            ctx = metadata_context[i]
-            review_data.update({
-                "asset_code": ctx["asset_code"],
-                "issuer_public_key": ctx["issuer"],
-                "status": ctx["status"]
-            })
-            reviews.append(review_data)
 
     return reviews
 
 
 def _extract_review_data_from_manage_data(data: dict) -> dict:
-    """Helper to decode and extract relevant review data from an account's manage_data."""
-    extracted = {}
-    for key, value in data.items():
-        try:
-            decoded_value = value.decode('utf-8')
-            # Filter for expected review metadata keys
-            if key in ["pdf_cid", "rating", "reviewer_type", "role", "duration", "reviewee"]:
-                extracted[key] = decoded_value
-        except Exception:
-            pass # Ignore non-utf8 or irrelevant data
-    return extracted
+    """Extract relevant review metadata from an already-decoded data dict."""
+    expected_keys = {"pdf_cid", "rating", "reviewer_type", "role", "duration", "reviewee"}
+    return {k: v for k, v in data.items() if k in expected_keys}

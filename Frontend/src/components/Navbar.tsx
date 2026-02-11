@@ -1,31 +1,35 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { MOCK_PROFILES } from '../data/mockProfiles';
+import { getProfile } from '../services/accounts';
+import type { WorkerProfile } from '../types';
 
 export default function Navbar() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchResult, setSearchResult] = useState<typeof MOCK_PROFILES['1001'] | null>(null);
+    const [searchResult, setSearchResult] = useState<WorkerProfile | null>(null);
     const [matchedAccountId, setMatchedAccountId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [error, setError] = useState('');
+    const [searching, setSearching] = useState(false);
 
-    const handleSearch = (e: React.FormEvent) => {
+    const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
-        if (!searchQuery.trim()) return;
+        const query = searchQuery.trim();
+        if (!query) return;
 
-        const accountId = searchQuery.trim();
-        const profile = MOCK_PROFILES[accountId];
-        if (profile) {
+        setSearching(true);
+        try {
+            const profile = await getProfile(query);
             setSearchResult(profile);
-            setMatchedAccountId(accountId);
+            setMatchedAccountId(query);
             setIsModalOpen(true);
-        } else {
+        } catch {
             setError('Account not found');
-            // Optional: Clear error after a few seconds
             setTimeout(() => setError(''), 3000);
+        } finally {
+            setSearching(false);
         }
     };
 
@@ -66,13 +70,18 @@ export default function Navbar() {
                                             value={searchQuery}
                                             onChange={(e) => setSearchQuery(e.target.value)}
                                             className={`block w-full pl-10 pr-3 py-2 border ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-primary'} rounded-full leading-5 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:bg-white dark:focus:bg-gray-900 focus:ring-1 sm:text-sm transition-colors`}
-                                            placeholder="Search Account ID..."
+                                            placeholder="Search Stellar public key (G…)"
                                             type="search"
                                         />
                                     </div>
                                     {error && (
                                         <div className="absolute top-full left-0 mt-2 w-full text-xs text-red-500 font-medium px-3">
                                             {error}
+                                        </div>
+                                    )}
+                                    {searching && (
+                                        <div className="absolute top-full left-0 mt-2 w-full text-xs text-primary font-medium px-3">
+                                            Searching…
                                         </div>
                                     )}
                                 </form>
@@ -118,7 +127,7 @@ export default function Navbar() {
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="block w-full pl-4 pr-10 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
-                                    placeholder="Search Account ID..."
+                                    placeholder="Search Stellar public key (G…)"
                                     type="search"
                                 />
                                 <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-primary">
@@ -164,34 +173,32 @@ export default function Navbar() {
                             <div className="px-6 pb-6 relative pt-6">
                                 <div className="text-center space-y-2">
                                     <p className="text-2xl font-bold text-slate-600 dark:text-slate-300 tracking-tight">
-                                        {searchResult.avatar}
+                                        {(searchResult.name ?? 'N/A').slice(0, 2).toUpperCase()}
                                     </p>
                                     <div>
                                         <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
-                                            {searchResult.name}
+                                            {searchResult.name ?? 'Unknown'}
                                         </h3>
                                         <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 text-[10px] font-semibold uppercase tracking-wide mt-1 border border-blue-100 dark:border-blue-800">
-                                            {searchResult.role}
+                                            {searchResult.role ?? searchResult.worker_type ?? 'Worker'}
                                         </span>
                                     </div>
 
-                                    {/* Stats Grid */}
+                                    {/* Info Grid */}
                                     <div className="grid grid-cols-2 gap-3 mt-6 py-4 border-t border-b border-slate-100 dark:border-slate-800">
                                         <div className="group p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                            <div className="flex items-center justify-center gap-1.5 text-yellow-500 mb-1">
-                                                <span className="material-icons-outlined text-xl group-hover:scale-110 transition-transform">star</span>
-                                                <span className="text-xl font-bold text-slate-900 dark:text-white">{searchResult.rating}</span>
+                                            <div className="flex items-center justify-center gap-1.5 text-blue-500 mb-1">
+                                                <span className="material-icons-outlined text-xl group-hover:scale-110 transition-transform">build</span>
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white">{searchResult.skills.length}</span>
                                             </div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Rating</div>
+                                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Skills</div>
                                         </div>
                                         <div className="group p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                                            <div className="flex items-center justify-center gap-1.5 text-blue-500 mb-1">
+                                            <div className="flex items-center justify-center gap-1.5 text-yellow-500 mb-1">
                                                 <span className="material-icons-outlined text-xl group-hover:scale-110 transition-transform">work</span>
-                                                <span className="text-xl font-bold text-slate-900 dark:text-white">{searchResult.jobsCompleted ?? searchResult.jobsContracted}</span>
+                                                <span className="text-sm font-bold text-slate-900 dark:text-white">{searchResult.experience ?? '—'}</span>
                                             </div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
-                                                {searchResult.jobsCompleted !== undefined ? 'Jobs Completed' : 'Jobs Contracted'}
-                                            </div>
+                                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Experience</div>
                                         </div>
                                     </div>
 

@@ -34,6 +34,10 @@ class PaymentService:
     ):
         """
         Build a payment transaction.
+
+        If the destination account does not exist on the Stellar network yet,
+        a ``create_account`` operation is used instead of ``payment`` so the
+        first transfer also activates the account on-chain.
         
         Args:
             source_public_key: Sender's public key
@@ -50,12 +54,23 @@ class PaymentService:
         
         account = self.stellar.load_account(source_public_key)
         builder = self.stellar.build_transaction(account)
-        
-        builder.append_payment_op(
-            destination=destination_public_key,
-            amount=amount,
-            asset=asset
-        )
+
+        # Check whether the destination already exists on the network.
+        # If not, we must use create_account (which funds + creates in one op).
+        dest_exists = self.stellar.account_exists(destination_public_key)
+
+        if dest_exists:
+            builder.append_payment_op(
+                destination=destination_public_key,
+                amount=amount,
+                asset=asset
+            )
+        else:
+            # create_account only works with native XLM
+            builder.append_create_account_op(
+                destination=destination_public_key,
+                starting_balance=amount
+            )
         
         if memo:
             builder.add_text_memo(memo)

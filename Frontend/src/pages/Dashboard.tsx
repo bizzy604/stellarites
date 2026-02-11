@@ -1,13 +1,17 @@
-import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { getSession } from '../services/session';
 import WorkerDashboard from './WorkerDashboard';
 import EmployerDashboard from './EmployerDashboard';
 
 export default function Dashboard() {
-    const [role] = useState<'worker' | 'employer'>(() => {
-        return (localStorage.getItem('paytrace_role') as 'worker' | 'employer') || 'worker';
-    });
+    const session = getSession();
 
-    if (role === 'employer') {
+    // Not logged in → redirect to sign-in
+    if (!session) {
+        return <Navigate to="/auth/signin" replace />;
+    }
+
+    if (session.role === 'employer') {
         return <EmployerDashboard />;
     }
 

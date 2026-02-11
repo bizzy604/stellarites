@@ -1,4 +1,9 @@
+from contextlib import asynccontextmanager
+import asyncio
+import logging
+
 from fastapi import FastAPI, Form, Header
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 
 from app.config import Config
@@ -6,11 +11,64 @@ from app.api.v1.reviews import router as reviews_router # Import the new router
 from app.routes.payments import router as payments_router  # Import payments router
 from app.routes.accounts import router as accounts_router  # Import accounts router
 from app.routes.stellar import router as stellar_router  # Import stellar router
+from app.routes.schedules import router as schedules_router  # Import schedules router
+
+logger = logging.getLogger(__name__)
+
+SCHEDULER_INTERVAL_SECONDS = 60  # check for due payments every 60 s
+
+
+async def _scheduled_payments_loop():
+    """Background loop: execute due scheduled payments every SCHEDULER_INTERVAL_SECONDS."""
+    from app.services.payments import get_payment_service
+    from app.routes.schedules import _run_due_payments
+
+    while True:
+        await asyncio.sleep(SCHEDULER_INTERVAL_SECONDS)
+        try:
+            ps = get_payment_service()
+            result = _run_due_payments(ps)
+            if result["executed"] or result["failed"]:
+                logger.info(
+                    "Scheduled-payments run: executed=%s failed=%s",
+                    result["executed"],
+                    result["failed"],
+                )
+        except Exception:
+            logger.exception("Scheduled-payments background task error")
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    """Startup / shutdown lifecycle."""
+    task = asyncio.create_task(_scheduled_payments_loop())
+    logger.info("Background scheduler started (interval=%ss)", SCHEDULER_INTERVAL_SECONDS)
+    yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
 
 app = FastAPI(
     title="NannyChain API",
     description="Backend for NannyChain: USSD, Stellar wallet mapping, Africa's Talking.",
     version="0.1.0",
+    lifespan=lifespan,
+)
+
+# CORS – allow the frontend dev server and production origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include API routers
@@ -18,6 +76,7 @@ app.include_router(reviews_router, prefix="/api/v1", tags=["Reviews"])
 app.include_router(payments_router, prefix="/api/v1", tags=["Payments"])
 app.include_router(accounts_router, prefix="/api/v1", tags=["Accounts"])
 app.include_router(stellar_router, prefix="/api/v1", tags=["Stellar"])
+app.include_router(schedules_router, prefix="/api/v1", tags=["Schedules & Claims"])
 
 USSD_API_KEY = Config.USSD_API_KEY or None
 
