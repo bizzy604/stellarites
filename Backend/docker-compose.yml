@@ -56,7 +56,7 @@ services:
         condition: service_healthy
     volumes:
       - ./:/app
-    command: python app.py
+    command: uvicorn app.main:app --host 0.0.0.0 --port 5000
 
 volumes:
   postgres_data:

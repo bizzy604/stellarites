@@ -17,7 +17,7 @@ The backend uses a **layered architecture**: business logic lives in **services*
 ## Architecture Overview
 
 ```
-USSD / Web Client  →  Backend API (Flask)  →  Services  →  DB / Redis / Stellar / Africa's Talking
+USSD / Web Client  →  Backend API (FastAPI)  →  Services  →  DB / Redis / Stellar / Africa's Talking
 ```
 
 **Rules:**
@@ -35,7 +35,7 @@ USSD / Web Client  →  Backend API (Flask)  →  Services  →  DB / Redis / St
 ```
 Backend/
 ├── app/
-│   ├── main.py              # Flask app: /health, POST /ussd
+│   ├── main.py              # FastAPI app: /health, POST /ussd
 │   ├── config/              # Config from env (Config class)
 │   ├── api/v1/              # (Future REST API)
 │   ├── services/
@@ -85,7 +85,7 @@ Backend/
 
 | Component | Technology |
 |-----------|------------|
-| API | Flask |
+| API | FastAPI |
 | Database | PostgreSQL (psycopg2) |
 | Cache & USSD sessions | Redis |
 | Blockchain | Stellar (stellar-sdk) |
@@ -134,10 +134,12 @@ python -m venv venv
 # Windows: venv\Scripts\activate
 # Linux/Mac: source venv/bin/activate
 pip install -r requirements.txt
-python -m app.main
+uvicorn app.main:app --reload --host 0.0.0.0 --port 5000
 ```
 
-API base: `http://localhost:5000`
+Or: `python run.py`
+
+API base: `http://localhost:5000`. Swagger UI: `http://localhost:5000/docs`
 
 ---
 
@@ -147,6 +149,8 @@ API base: `http://localhost:5000`
 |--------|------|-------------|
 | GET | `/health` | Health check; returns `{"status":"ok"}` |
 | POST | `/ussd` | Africa's Talking USSD callback (form: sessionId, phoneNumber, text) |
+| GET | `/docs` | Swagger UI (interactive API docs) |
+| GET | `/openapi.json` | OpenAPI 3 schema |
 
 ---
 
@@ -213,9 +217,18 @@ When implemented, these should use the same services/repositories:
 
 ---
 
+## Development and CI
+
+- **Lint and format:** `ruff check app tests && ruff format app tests` (or `make format` from Backend).
+- **Tests:** `pytest` (or `make test` from Backend). No Redis/DB needed for current tests (USSD session is mocked).
+- **Pre-commit:** From repo root, see [CONTRIBUTING.md](../CONTRIBUTING.md) for optional pre-commit hooks.
+- **CI:** GitHub Actions runs on push/PR to `main`: Backend (Ruff + Pytest), Frontend (ESLint + build). See `.github/workflows/ci.yml`.
+
 ## Running tests
 
 ```bash
+cd Backend
+pip install -r requirements-dev.txt
 pytest -v
 ```
 

@@ -8,7 +8,7 @@ This document describes the current backend implementation so the team stays ali
 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────────────────────────┐
-│  USSD / Web     │────▶│  Flask (main.py)  │────▶│  Services (user_service, etc.)        │
+│  USSD / Web     │────▶│  FastAPI (main.py)│────▶│  Services (user_service, etc.)        │
 │  Client         │     │  Routes only      │     │  Business logic                        │
 └─────────────────┘     └──────────────────┘     └───────────────┬───────────────────────┘
                                                                 │
@@ -30,12 +30,14 @@ This document describes the current backend implementation so the team stays ali
 
 ## Components
 
-### Flask app (`app/main.py`)
+### FastAPI app (`app/main.py`)
 
-- **GET /health** — Health check.
-- **POST /ussd** — USSD callback for Africa’s Talking. Reads form fields `sessionId`, `phoneNumber`, `text`. Optionally enforces `Authorization: Bearer <USSD_API_KEY>`. Returns plain-text CON/END response.
+- **GET /health** — Health check (JSON).
+- **POST /ussd** — USSD callback for Africa’s Talking. Form: `sessionId`, `phoneNumber`, `text`. Optional header `Authorization: Bearer <USSD_API_KEY>`. Returns plain-text CON/END.
 
-All config comes from `app.config.Config` (env via `.env`).
+- **GET /docs** — Swagger UI. **GET /openapi.json** — OpenAPI 3 schema.
+
+Config from `app.config.Config` (env via `.env`).
 
 ### Config (`app/config/__init__.py`)
 
