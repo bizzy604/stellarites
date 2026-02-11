@@ -1,17 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-
-// Mock Data for User Profiles [Account Number -> Profile]
-const MOCK_PROFILES: Record<string, { name: string; role: string; rating: number; yearsWorked: number; avatar: string }> = {
-    '1001': { name: 'Sarah Wilson', role: 'Domestic Worker', rating: 4.9, yearsWorked: 5, avatar: 'SW' },
-    '1002': { name: 'James Rodriquez', role: 'Employer', rating: 5.0, yearsWorked: 8, avatar: 'JR' },
-    '1003': { name: 'Emily Chen', role: 'Domestic Worker', rating: 4.7, yearsWorked: 3, avatar: 'EC' },
-    '1004': { name: 'Michael Chang', role: 'Employer', rating: 4.8, yearsWorked: 12, avatar: 'MC' },
-};
+import { MOCK_PROFILES } from '../data/mockProfiles';
 
 export default function Navbar() {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResult, setSearchResult] = useState<typeof MOCK_PROFILES['1001'] | null>(null);
+    const [matchedAccountId, setMatchedAccountId] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [error, setError] = useState('');
@@ -22,9 +16,11 @@ export default function Navbar() {
 
         if (!searchQuery.trim()) return;
 
-        const profile = MOCK_PROFILES[searchQuery.trim()];
+        const accountId = searchQuery.trim();
+        const profile = MOCK_PROFILES[accountId];
         if (profile) {
             setSearchResult(profile);
+            setMatchedAccountId(accountId);
             setIsModalOpen(true);
         } else {
             setError('Account not found');
@@ -165,23 +161,11 @@ export default function Navbar() {
                             </div>
 
                             {/* Content */}
-                            <div className="px-6 pb-6 relative">
-                                {/* Avatar */}
-                                <div className="absolute -top-12 left-1/2 -translate-x-1/2">
-                                    <div className="relative">
-                                        <div className="w-24 h-24 rounded-full bg-white dark:bg-slate-900 p-1.5 shadow-xl ring-1 ring-black/5 dark:ring-white/10">
-                                            <div className="w-full h-full rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl font-bold text-slate-600 dark:text-slate-300 border-4 border-white dark:border-slate-900">
-                                                {searchResult.avatar}
-                                            </div>
-                                        </div>
-                                        {/* Verified Badge */}
-                                        <div className="absolute bottom-1 right-1 bg-blue-500 text-white rounded-full p-1 shadow-lg border-2 border-white dark:border-slate-900" title="Verified Account">
-                                            <span className="material-icons-outlined text-xs font-bold block">check</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="mt-14 text-center space-y-2">
+                            <div className="px-6 pb-6 relative pt-6">
+                                <div className="text-center space-y-2">
+                                    <p className="text-2xl font-bold text-slate-600 dark:text-slate-300 tracking-tight">
+                                        {searchResult.avatar}
+                                    </p>
                                     <div>
                                         <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">
                                             {searchResult.name}
@@ -202,16 +186,27 @@ export default function Navbar() {
                                         </div>
                                         <div className="group p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                             <div className="flex items-center justify-center gap-1.5 text-blue-500 mb-1">
-                                                <span className="material-icons-outlined text-xl group-hover:scale-110 transition-transform">work_history</span>
-                                                <span className="text-xl font-bold text-slate-900 dark:text-white">{searchResult.yearsWorked}</span>
-                                                <span className="text-xs font-medium text-slate-400 self-end mb-0.5">yrs</span>
+                                                <span className="material-icons-outlined text-xl group-hover:scale-110 transition-transform">work</span>
+                                                <span className="text-xl font-bold text-slate-900 dark:text-white">{searchResult.jobsCompleted ?? searchResult.jobsContracted}</span>
                                             </div>
-                                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">Experience</div>
+                                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+                                                {searchResult.jobsCompleted !== undefined ? 'Jobs Completed' : 'Jobs Contracted'}
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Actions */}
-                                    <div className="mt-6">
+                                    <div className="mt-6 flex flex-col gap-3">
+                                        {matchedAccountId && (
+                                            <Link
+                                                to={`/profile/${matchedAccountId}`}
+                                                onClick={() => setIsModalOpen(false)}
+                                                className="w-full py-3 rounded-xl bg-primary text-white font-semibold hover:bg-primary-dark transition-colors text-sm text-center flex items-center justify-center gap-2"
+                                            >
+                                                View Profile
+                                                <span className="material-icons-outlined text-lg">arrow_forward</span>
+                                            </Link>
+                                        )}
                                         <button
                                             onClick={() => setIsModalOpen(false)}
                                             className="w-full py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-sm"
