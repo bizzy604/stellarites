@@ -7,6 +7,11 @@ _initialized = False
 
 
 def _init():
+    """
+    Initialize the Africa's Talking SDK when credentials are available.
+    
+    If the SDK has already been initialized, this function returns immediately. When both Config.AT_USERNAME and Config.AT_API_KEY are set, it initializes the africastalking client and marks the module as initialized; if credentials are missing, it does nothing.
+    """
     global _initialized
     if _initialized:
         return
@@ -17,7 +22,16 @@ def _init():
 
 
 def send_sms(to: str, message: str) -> bool:
-    """Send SMS to a single number. 'to' can be 254712345678 or +254712345678."""
+    """
+    Send an SMS message to a single Kenyan phone number.
+    
+    Parameters:
+        to (str): Recipient number in either "254712345678", "+254712345678", or a local format like "0712345678".
+        message (str): Text content of the SMS.
+    
+    Returns:
+        True if the message was sent successfully; False if credentials are missing or if sending failed.
+    """
     _init()
     if not Config.AT_USERNAME or not Config.AT_API_KEY:
         return False
