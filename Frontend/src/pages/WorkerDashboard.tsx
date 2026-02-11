@@ -8,6 +8,7 @@ export default function WorkerDashboard() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     // Pagination State
+    // @ts-ignore - unused for now, will be used for pagination later
     const [transactionPage, setTransactionPage] = useState(0);
 
     // Balance Visibility State
