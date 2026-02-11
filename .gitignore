@@ -1,0 +1,26 @@
+# Python caches and compiled files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test and tooling caches
+.pytest_cache/
+.mypy_cache/
+
+# Editor folders
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
