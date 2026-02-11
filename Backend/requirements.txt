@@ -14,7 +14,8 @@ gunicorn==21.2.0
 # ENV + SETTINGS
 # =========================
 python-dotenv==1.0.1
-pydantic==2.6.1
+pydantic==2.5.1
+pydantic-core==2.13.4
 pydantic-settings==2.2.1
 
 # =========================
