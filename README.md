@@ -6,6 +6,8 @@
 **Project Duration:** 48 hours (Hackathon MVP)  
 **Tech Stack:** React (Frontend) + Python/Flask (Backend) + PostgreSQL + Stellar
 
+**Implementation status:** Backend (USSD, Africa's Talking, Stellar wallet mapping on signup) and setup are documented in [`Backend/README.md`](Backend/README.md). Architecture and data flow are in [`Backend/docs/architecture.md`](Backend/docs/architecture.md).
+
 ---
 
 ## EXECUTIVE SUMMARY
