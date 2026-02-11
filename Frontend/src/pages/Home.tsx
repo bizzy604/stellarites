@@ -324,7 +324,7 @@ export default function Home() {
                     <div className="text-center max-w-3xl mx-auto mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-light dark:text-white">Built for speed, designed for trust</h2>
                         <p className="text-lg text-gray-600 dark:text-gray-300">
-                            Traditional banking is slow and expensive. Paytrace uses the Stellar network to move money like email—fast, cheap, and global.
+                        Modern payments for modern households. We've replaced slow, expensive banking with a system that's fast, cheap, and works exactly like your favorite apps 
                         </p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-10">
@@ -349,7 +349,7 @@ export default function Home() {
                             </div>
                             <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Minimal Fees</h3>
                             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                                Keep more of your hard-earned money. By cutting out intermediaries, we offer transaction fees that are a fraction of a cent.
+                            Finally, a way to send money without the heavy 'withdrawal' and 'sending' fees. We use direct technology to keep costs almost zero, so more money stays in your pocket
                             </p>
                         </div>
                         <div className="group p-8 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 hover:border-primary/30 dark:hover:border-primary/30 transition-all hover:shadow-lg dark:hover:shadow-none relative overflow-hidden">
@@ -361,7 +361,7 @@ export default function Home() {
                             </div>
                             <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Total Transparency</h3>
                             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                                Track every penny in real-time. The public ledger ensures that all payments are verifiable, immutable, and secure.
+                            Track every cent instantly. Secure, unchangeable records that prove you've paid fairly and on time, every time.
                             </p>
                         </div>
                     </div>
@@ -372,7 +372,7 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                         <div className="md:w-1/2">
-                            <h2 className="text-3xl font-bold mb-6 text-text-light dark:text-white">Trusted by domestic workers across the globe</h2>
+                            <h2 className="text-3xl font-bold mb-6 text-text-light dark:text-white">Will be trusted by domestic workers across the globe</h2>
                             <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
                                 "Paytrace has changed how I send money home. It's instant, and I don't lose a chunk of my salary to fees anymore."
                             </p>
@@ -423,7 +423,7 @@ export default function Home() {
                             Get Started Now
                         </Link>
                     </div>
-                    <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">No credit card required. Free to join.</p>
+                    <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">Paytrace — Secure blockchain payments for the heart of your home."</p>
                 </div>
             </section>
             <Footer />

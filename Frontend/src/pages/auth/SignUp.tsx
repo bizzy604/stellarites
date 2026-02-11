@@ -9,21 +9,45 @@ export default function SignUp() {
         e.preventDefault();
 
         const formData = new FormData(e.currentTarget);
-        const email = formData.get('email') as string;
+        const name = (formData.get('name') as string || '').trim();
+        const phone = (formData.get('phone') as string || '').trim();
+        const location = (formData.get('location') as string || '').trim();
+        const experience = (formData.get('experience') as string || '').trim();
+        const skills = formData.getAll('skills') as string[];
 
-        if (email) {
-            // Get existing users or initialize empty object
-            const users = JSON.parse(localStorage.getItem('paytrace_users') || '{}');
-
-            // Add/Update user
-            users[email.toLowerCase()] = { role };
-
-            // Save back to localStorage
-            localStorage.setItem('paytrace_users', JSON.stringify(users));
+        // Basic required fields for MVP worker registration
+        if (!phone) {
+            alert('Please enter your phone number.');
+            return;
         }
 
-        // Save current session role
+        // Generate a simple local Worker ID if not already present for this phone
+        const usersRaw = localStorage.getItem('paytrace_users');
+        const users = usersRaw ? JSON.parse(usersRaw) : {};
+        const existing = users[phone];
+
+        const workerId =
+            existing?.workerId ||
+            `NW-${Math.random().toString(36).substring(2, 6).toUpperCase()}${Math.floor(
+                Math.random() * 90 + 10,
+            )}`;
+
+        // Persist a minimal profile we can reuse in dashboards / QR identity
+        users[phone] = {
+            role,
+            name,
+            phone,
+            location,
+            experience,
+            skills,
+            workerId,
+        };
+        localStorage.setItem('paytrace_users', JSON.stringify(users));
+
+        // Save current session role + active profile
         localStorage.setItem('paytrace_role', role);
+        localStorage.setItem('paytrace_active_phone', phone);
+        localStorage.setItem('paytrace_worker_id', workerId);
         navigate('/dashboard');
     };
 
@@ -108,40 +132,93 @@ export default function SignUp() {
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-text-light dark:text-text-dark mb-1.5">Email or Phone</label>
+                            <label htmlFor="phone" className="block text-sm font-medium text-text-light dark:text-text-dark mb-1.5">Phone Number</label>
                             <div className="relative rounded-md shadow-sm">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="material-icons-outlined text-gray-400 text-lg">email</span>
+                                    <span className="material-icons-outlined text-gray-400 text-lg">phone_iphone</span>
                                 </div>
                                 <input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    placeholder="you@example.com"
+                                    id="phone"
+                                    name="phone"
+                                    type="tel"
+                                    placeholder="e.g. 0712 345 678"
                                     className="block w-full pl-10 pr-3 py-2.5 border border-border-light dark:border-border-dark rounded-lg leading-5 bg-gray-50 dark:bg-gray-800 text-text-light dark:text-text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
+                                    required
                                 />
                             </div>
+                            <p className="mt-1 text-xs text-subtext-light dark:text-subtext-dark">
+                                We’ll use your phone to generate your Worker ID.
+                            </p>
                         </div>
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-text-light dark:text-text-dark mb-1.5">Password</label>
-                            <div className="relative rounded-md shadow-sm">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span className="material-icons-outlined text-gray-400 text-lg">lock</span>
+                        {role === 'worker' && (
+                            <>
+                                <div>
+                                    <label className="block text-sm font-medium text-text-light dark:text-text-dark mb-1.5">Skills</label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {['Childcare', 'Cooking', 'Cleaning', 'Elderly Care'].map((skill) => (
+                                            <label key={skill} className="inline-flex items-center gap-2 text-sm bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border border-border-light dark:border-border-dark">
+                                                <input
+                                                    type="checkbox"
+                                                    name="skills"
+                                                    value={skill}
+                                                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded dark:bg-gray-700 dark:border-gray-600"
+                                                />
+                                                <span className="text-text-light dark:text-text-dark">{skill}</span>
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    className="block w-full pl-10 pr-10 py-2.5 border border-border-light dark:border-border-dark rounded-lg leading-5 bg-gray-50 dark:bg-gray-800 text-text-light dark:text-text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
-                                />
-                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer">
-                                    <span className="material-icons-outlined text-gray-400 text-lg hover:text-gray-600 dark:hover:text-gray-300">visibility_off</span>
+
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label htmlFor="experience" className="block text-sm font-medium text-text-light dark:text-text-dark mb-1.5">
+                                            Experience Level
+                                        </label>
+                                        <div className="relative rounded-md shadow-sm">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span className="material-icons-outlined text-gray-400 text-lg">timeline</span>
+                                            </div>
+                                            <select
+                                                id="experience"
+                                                name="experience"
+                                                className="block w-full pl-10 pr-10 py-2.5 border border-border-light dark:border-border-dark rounded-lg leading-5 bg-gray-50 dark:bg-gray-800 text-text-light dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out appearance-none"
+                                                defaultValue=""
+                                            >
+                                                <option value="" disabled>
+                                                    Select experience
+                                                </option>
+                                                <option value="<1yr">&lt; 1 year</option>
+                                                <option value="1-3yr">1–3 years</option>
+                                                <option value="3-5yr">3–5 years</option>
+                                                <option value="5+yr">5+ years</option>
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                <span className="material-icons-outlined text-gray-400 text-lg">expand_more</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="location" className="block text-sm font-medium text-text-light dark:text-text-dark mb-1.5">
+                                            Location
+                                        </label>
+                                        <div className="relative rounded-md shadow-sm">
+                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span className="material-icons-outlined text-gray-400 text-lg">location_on</span>
+                                            </div>
+                                            <input
+                                                id="location"
+                                                name="location"
+                                                type="text"
+                                                placeholder="e.g. Kawangware, Nairobi"
+                                                className="block w-full pl-10 pr-3 py-2.5 border border-border-light dark:border-border-dark rounded-lg leading-5 bg-gray-50 dark:bg-gray-800 text-text-light dark:text-text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm transition duration-150 ease-in-out"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <p className="mt-1 text-xs text-subtext-light dark:text-subtext-dark">Must be at least 8 characters.</p>
-                        </div>
+                            </>
+                        )}
 
                         <div className="flex items-start">
                             <div className="flex items-center h-5">

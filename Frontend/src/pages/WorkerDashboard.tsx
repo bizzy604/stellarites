@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+function generateQrData(workerId: string, phone: string) {
+    return JSON.stringify({
+        workerId,
+        phone,
+    });
+}
 
 export default function WorkerDashboard() {
     const [activeTab, setActiveTab] = useState<'account' | 'transactions' | 'reviews'>('account');
@@ -17,6 +23,35 @@ export default function WorkerDashboard() {
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [withdrawStep, setWithdrawStep] = useState<'input' | 'processing' | 'success'>('input');
 
+    // Identity / QR state
+    const [showQrModal, setShowQrModal] = useState(false);
+
+    const workerProfile = useMemo(() => {
+        const phone = localStorage.getItem('paytrace_active_phone');
+        const workerId = localStorage.getItem('paytrace_worker_id');
+        const usersRaw = localStorage.getItem('paytrace_users');
+        let profile: any = null;
+        if (phone && usersRaw) {
+            try {
+                const users = JSON.parse(usersRaw);
+                profile = users[phone] || null;
+            } catch {
+                profile = null;
+            }
+        }
+        return {
+            workerId: workerId || profile?.workerId || 'NW-DEMO-01',
+            phone: profile?.phone || phone || '',
+            name: profile?.name || 'Domestic Worker',
+            location: profile?.location || 'Nairobi',
+        };
+    }, []);
+
+    const qrData = useMemo(
+        () => generateQrData(workerProfile.workerId, workerProfile.phone),
+        [workerProfile.workerId, workerProfile.phone],
+    );
+
     const handleWithdraw = (e: React.FormEvent) => {
         e.preventDefault();
         setWithdrawStep('processing');
@@ -25,7 +60,7 @@ export default function WorkerDashboard() {
             setWithdrawStep('success');
         }, 1500);
     };
-    const balance = 4250.00;
+    const balance = 4250.0;
 
     const transactions = [
         { id: 1, title: 'Salary Payment', subtitle: 'From: Mr. Anderson', type: 'income', amount: 1200.00, fiatAmount: 150.00, date: 'Oct 24, 2023', time: '10:30 AM', status: 'Completed' },
@@ -161,7 +196,7 @@ export default function WorkerDashboard() {
                                         <div className="flex items-center justify-between mb-6">
                                             <span className="text-blue-900 dark:text-blue-100 font-medium flex items-center gap-2">
                                                 <span className="material-icons-outlined text-lg">account_balance_wallet</span>
-                                                Wallet Balance
+                                                Current Balance
                                                 <button
                                                     onClick={() => setShowBalance(!showBalance)}
                                                     className="ml-2 text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-white transition-colors focus:outline-none"
@@ -176,10 +211,14 @@ export default function WorkerDashboard() {
                                         </div>
                                         <div className="mb-4">
                                             <h2 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
-                                                {showBalance ? balance.toLocaleString('en-US', { minimumFractionDigits: 2 }) : '••••••'}
+                                                {showBalance ? `KES ${ (balance * 125).toLocaleString('en-KE', { minimumFractionDigits: 0 }) }` : 'KES ••••••'}
                                             </h2>
                                             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                                                {showBalance ? `≈ $531.25 USD` : '≈ $•••••• USD'}
+                                                {showBalance
+                                                    ? `${balance.toLocaleString('en-US', {
+                                                          minimumFractionDigits: 2,
+                                                      })} XLM`
+                                                    : '•••••• XLM'}
                                             </p>
                                         </div>
                                     </div>
@@ -435,6 +474,47 @@ export default function WorkerDashboard() {
                     {
                         activeTab === 'reviews' && (
                             <div className="space-y-6">
+                                {/* Worker Identity Card */}
+                                <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden">
+                                    <div className="p-6 border-b border-border-light dark:border-border-dark flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                        <div>
+                                            <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                                                My Worker ID
+                                                <span className="px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold border border-green-200 dark:border-green-700/50">
+                                                    Verified
+                                                </span>
+                                            </h3>
+                                            <p className="text-secondary dark:text-slate-400 text-sm mt-1">
+                                                Show this QR to new employers so they can verify your work history.
+                                            </p>
+                                            <div className="mt-3 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                                                <p>
+                                                    <span className="font-semibold">Name:</span> {workerProfile.name}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">Worker ID:</span> {workerProfile.workerId}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">Location:</span> {workerProfile.location}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-start md:items-end gap-3">
+                                            <button
+                                                onClick={() => setShowQrModal(true)}
+                                                className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                                            >
+                                                <span className="material-icons-outlined text-sm">qr_code_2</span>
+                                                View My QR ID
+                                            </button>
+                                            <p className="text-[11px] text-secondary dark:text-slate-500 flex items-center gap-1">
+                                                <span className="material-icons-outlined text-[12px]">info</span>
+                                                Stores only your Worker ID and phone.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm overflow-hidden">
                                     <div className="p-6 border-b border-border-light dark:border-border-dark flex items-center justify-between bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/50 dark:to-slate-800/30">
                                         <div>
@@ -495,6 +575,35 @@ export default function WorkerDashboard() {
                         <span className="material-icons-outlined hidden dark:block">light_mode</span>
                     </button>
                 </div>
+
+                {/* QR Modal */}
+                {showQrModal && (
+                    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                        <div className="bg-white dark:bg-surface-dark rounded-2xl shadow-2xl max-w-sm w-full border border-border-light dark:border-border-dark overflow-hidden">
+                            <div className="px-6 py-4 border-b border-border-light dark:border-border-dark flex items-center justify-between">
+                                <h3 className="font-bold text-lg text-slate-900 dark:text-white">My QR ID</h3>
+                                <button
+                                    onClick={() => setShowQrModal(false)}
+                                    className="text-secondary dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-100 transition-colors"
+                                >
+                                    <span className="material-icons-outlined">close</span>
+                                </button>
+                            </div>
+                            <div className="px-6 py-6 flex flex-col items-center gap-4">
+                                {/* Text representation of QR payload so it can be wired to a real generator later */}
+                                <div className="w-48 h-48 rounded-2xl bg-slate-900 flex items-center justify-center text-[10px] text-slate-200 p-3 text-center">
+                                    <span className="break-all">
+                                        {qrData}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-secondary dark:text-slate-400 text-center">
+                                    In a production version this would be a scannable QR code that encodes your Worker ID and
+                                    phone, so employers can open your verified profile.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );
