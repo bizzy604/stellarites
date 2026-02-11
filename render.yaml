@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: nannychain-backend
+    runtime: python3
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python run.py"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: STELLAR_NETWORK
+        sync: false
+      - key: STELLAR_FUNDING_SECRET
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: AT_USERNAME
+        sync: false
+      - key: AT_API_KEY
+        sync: false
+      - key: USSD_API_KEY
+        sync: false
+      - key: USSD_SESSION_TTL
+        sync: false
+      - key: PINATA_API_KEY
+        sync: false
+      - key: PINATA_SECRET_KEY
+        sync: false
+      - key: PINATA_GATEWAY
+        sync: false
+      - key: REVIEW_UNLOCK_DAYS
+        sync: false
+      - key: REVIEW_LINK_EXPIRY_DAYS
+        sync: false
+      - key: REVIEW_FRONTEND_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        sync: false
