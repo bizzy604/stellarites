@@ -3,7 +3,13 @@ services:
     name: nannychain-backend
     runtime: python3
     pythonVersion: 3.11
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: |
+      export CARGO_HOME="$HOME/.cargo"
+      export RUSTUP_HOME="$HOME/.rustup"
+      export CARGO_TARGET_DIR="/tmp/cargo-target"
+      mkdir -p "$CARGO_HOME" "$RUSTUP_HOME" "$CARGO_TARGET_DIR"
+      pip install --upgrade pip
+      pip install -r requirements.txt
     startCommand: "python run.py"
     envVars:
       - key: DATABASE_URL
