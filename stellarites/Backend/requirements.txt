@@ -1,6 +1,8 @@
-# 📦 `requirements.txt` (FastAPI + Fintech Stack Baseline)
-
-This is a strong baseline for FastAPI + PostgreSQL + Redis + M-Pesa + Stellar:
+flask
+redis
+sqlalchemy
+httpx
+psycopg2-binary
 
 # =========================
 # FASTAPI CORE

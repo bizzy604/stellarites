@@ -38,7 +38,7 @@ USSD/Web Client → Backend API → Services → DB / Redis / Stellar / M-Pesa
 
 ```
 
-nannychain-backend/
+stellarites/
 │
 ├── app/
 │   ├── main.py
