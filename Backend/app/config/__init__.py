@@ -40,3 +40,10 @@ class Config:
 
     # JWT signing
     SECRET_KEY = os.getenv("SECRET_KEY", "changeme")
+
+    # App debug
+    app_debug = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
+
+
+def get_settings() -> Config:
+    return Config()

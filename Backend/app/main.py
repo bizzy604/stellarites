@@ -3,6 +3,9 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 
 from app.config import Config
 from app.api.v1.reviews import router as reviews_router # Import the new router
+from app.routes.payments import router as payments_router  # Import payments router
+from app.routes.accounts import router as accounts_router  # Import accounts router
+from app.routes.stellar import router as stellar_router  # Import stellar router
 
 app = FastAPI(
     title="NannyChain API",
@@ -12,6 +15,9 @@ app = FastAPI(
 
 # Include API routers
 app.include_router(reviews_router, prefix="/api/v1", tags=["Reviews"])
+app.include_router(payments_router, prefix="/api/v1", tags=["Payments"])
+app.include_router(accounts_router, prefix="/api/v1", tags=["Accounts"])
+app.include_router(stellar_router, prefix="/api/v1", tags=["Stellar"])
 
 USSD_API_KEY = Config.USSD_API_KEY or None
 

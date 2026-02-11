@@ -6,9 +6,9 @@ Stellar account management operations.
 from typing import Optional, Dict, List, Any
 from stellar_sdk import Keypair, Operation, Asset
 
-from app.services.stellar.stellar_service import get_stellar_service, StellarService
+from app.services.stellar import get_stellar_service, StellarService
 from app.utils.exceptions import StellarError
-from app.utils.constants import ACCOUNT_DATA_KEYS
+# from app.utils.constants import ACCOUNT_DATA_KEYS
 
 
 class AccountService:
