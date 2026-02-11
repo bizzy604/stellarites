@@ -36,3 +36,15 @@ def get_by_phone(phone: str) -> dict | None:
             )
             row = cur.fetchone()
             return dict(row) if row else None
+
+def get_by_worker_id(worker_id: str) -> dict | None:
+    """Get worker by worker_id. Returns None if not found. (Placeholder for now)"""
+    # This function needs to be properly implemented to fetch from DB
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id, worker_id, phone, name, stellar_public_key, created_at FROM workers WHERE worker_id = %s",
+                (worker_id,),
+            )
+            row = cur.fetchone()
+            return dict(row) if row else None

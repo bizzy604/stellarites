@@ -2,12 +2,16 @@ from fastapi import FastAPI, Form, Header
 from fastapi.responses import JSONResponse, PlainTextResponse
 
 from app.config import Config
+from app.api.v1.reviews import router as reviews_router # Import the new router
 
 app = FastAPI(
     title="NannyChain API",
     description="Backend for NannyChain: USSD, Stellar wallet mapping, Africa's Talking.",
     version="0.1.0",
 )
+
+# Include API routers
+app.include_router(reviews_router, prefix="/api/v1", tags=["Reviews"])
 
 USSD_API_KEY = Config.USSD_API_KEY or None
 
