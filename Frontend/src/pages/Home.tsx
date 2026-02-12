@@ -46,48 +46,6 @@ export default function Home() {
 
             {/* Hero Section (Non-sticky) */}
             <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-<<<<<<< HEAD
-                <div className="absolute inset-0 tech-pattern z-0 pointer-events-none"></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-background-dark z-0 pointer-events-none"></div>
-                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-primary text-xs font-semibold uppercase tracking-wide mb-6 border border-blue-100 dark:border-blue-800">
-                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                        Powered by Stellar Network
-                    </div>
-                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8 text-text-light dark:text-white leading-tight">
-                        Secure payments for the <br className="hidden md:block" />
-                        <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-400">modern workforce</span>
-                    </h1>
-                    <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-600 dark:text-gray-300 mb-10">
-                        Paytrace leverages blockchain technology to provide instant, low-cost, and transparent cross-border payments for domestic workers and employers worldwide.
-                    </p>
-                    <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <Link
-                            to="/auth/signup"
-                            className="inline-flex items-center justify-center px-8 py-3.5 border border-transparent text-base font-medium rounded-lg text-white bg-text-light dark:bg-white dark:text-background-dark hover:bg-gray-800 dark:hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                        >
-                            Create Free Account
-                            <span className="material-icons-outlined ml-2 text-sm">arrow_forward</span>
-                        </Link>
-                        <a
-                            href="#features"
-                            className="inline-flex items-center justify-center px-8 py-3.5 border border-gray-200 dark:border-gray-700 text-base font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                        >
-                            How it works
-                        </a>
-                        <a
-                            href="tel:*789*12350%23"
-                            className="inline-flex items-center justify-center px-8 py-3.5 border border-gray-200 dark:border-gray-700 text-base font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                        >
-                            No app? Dial *789*12350#
-                        </a>
-                    </div>
-                    <div className="mt-16 relative mx-auto max-w-5xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-surface-dark transform rotate-1 hover:rotate-0 transition-transform duration-500">
-                        <div className="absolute top-0 left-0 right-0 h-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 gap-2">
-                            <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                            <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                            <div className="w-3 h-3 rounded-full bg-green-400"></div>
-=======
                 <div className="absolute inset-0 tech-pattern z-0 pointer-events-none opacity-30"></div>
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/50 to-white dark:via-background-dark/50 dark:to-background-dark z-0 pointer-events-none"></div>
 
@@ -125,9 +83,14 @@ export default function Home() {
                                 >
                                     How it works
                                 </a>
+                                <a
+                                    href="tel:*789*12350%23"
+                                    className="inline-flex items-center justify-center px-8 py-4 border border-gray-200 dark:border-gray-700 text-lg font-medium rounded-xl text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                >
+                                    No app? Dial *789*12350#
+                                </a>
                             </div>
 
->>>>>>> c3b131b54e8719a8bca8a86d76c6ade2e37628f5
                         </div>
 
                         {/* Right Column: Visual */}
@@ -367,7 +330,7 @@ export default function Home() {
                     <div className="text-center max-w-3xl mx-auto mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold mb-4 text-text-light dark:text-white">Built for speed, designed for trust</h2>
                         <p className="text-lg text-gray-600 dark:text-gray-300">
-                            Traditional banking is slow and expensive. Paytrace uses the Stellar network to move money like email—fast, cheap, and global.
+                            Traditional banking is slow and expensive. KaziChain uses the Stellar network to move money like email—fast, cheap, and global.
                         </p>
                     </div>
                     <div className="grid md:grid-cols-3 gap-10">
@@ -380,7 +343,7 @@ export default function Home() {
                             </div>
                             <h3 className="text-xl font-bold mb-3 text-text-light dark:text-white">Lightning Speed</h3>
                             <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-                                Don't wait days for funds to clear. Payments on Paytrace settle in 3-5 seconds, ensuring workers get paid instantly when they need it most.
+                                Don't wait days for funds to clear. Payments on KaziChain settle in 3-5 seconds, ensuring workers get paid instantly when they need it most.
                             </p>
                         </div>
                         <div className="group p-8 rounded-2xl bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 hover:border-primary/30 dark:hover:border-primary/30 transition-all hover:shadow-lg dark:hover:shadow-none relative overflow-hidden">
@@ -417,7 +380,7 @@ export default function Home() {
                         <div className="md:w-1/2">
                             <h2 className="text-3xl font-bold mb-6 text-text-light dark:text-white">Trusted by domestic workers across the globe</h2>
                             <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
-                                "Paytrace has changed how I send money home. It's instant, and I don't lose a chunk of my salary to fees anymore."
+                                "KaziChain has changed how I send money home. It's instant, and I don't lose a chunk of my salary to fees anymore."
                             </p>
                             <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden">
@@ -429,7 +392,7 @@ export default function Home() {
                                 </div>
                                 <div>
                                     <div className="font-bold text-text-light dark:text-white">Sarah M.</div>
-                                    <div className="text-sm text-gray-500 dark:text-gray-400">Nurse & Paytrace User</div>
+                                    <div className="text-sm text-gray-500 dark:text-gray-400">Nurse & KaziChain User</div>
                                 </div>
                             </div>
                         </div>
@@ -456,7 +419,7 @@ export default function Home() {
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
                     <h2 className="text-4xl font-bold mb-6 text-text-light dark:text-white">Ready to experience the future of payments?</h2>
                     <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
-                        Join thousands of users who are saving time and money with Paytrace's blockchain solution.
+                        Join thousands of users who are saving time and money with KaziChain's blockchain solution.
                     </p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <Link

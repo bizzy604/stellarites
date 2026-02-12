@@ -1,6 +1,6 @@
-# PayTrace Backend — Team Onboarding
+# KaziChain Backend — Team Onboarding
 
-Welcome to the **PayTrace Unified Backend API**, the core backend powering:
+Welcome to the **KaziChain Unified Backend API**, the core backend powering:
 
 - Web Application (React PWA)
 - **USSD Interface (Africa's Talking)** — implemented
