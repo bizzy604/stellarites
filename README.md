@@ -1,164 +1,223 @@
-# PRODUCT REQUIREMENTS DOCUMENT (PRD)
-## KaziChain: Verified Work History Platform for Domestic Workers
+# KaziChain
 
-**Version:** 1.0  
-**Date:** January 22, 2026  
-**Project Duration:** 48 hours (Hackathon MVP)  
-**Tech Stack:** React (Frontend) + Python/FastAPI (Backend) + PostgreSQL + Stellar
-
-**Implementation status:** Backend (USSD, Africa's Talking, Stellar wallet mapping on signup) and setup are documented in [`Backend/README.md`](Backend/README.md). Architecture and data flow are in [`Backend/docs/architecture.md`](Backend/docs/architecture.md).
+**Verified work history & instant payments for domestic workers—powered by Stellar.**
 
 ---
 
-## EXECUTIVE SUMMARY
+## 🏆 Hackathon Submission
 
-KaziChain is a Progressive Web Application (PWA) that creates portable, verifiable work histories for domestic workers in Kenya, anchored on Stellar blockchain for immutability. The platform addresses trust asymmetry between employers and workers by providing cryptographically verifiable employment records, payment documentation, and reputation scoring.
+KaziChain is a **full-stack platform** that gives domestic workers in Kenya (and beyond) **portable, blockchain-anchored identity** and **low-cost instant payments**. Workers get a Stellar wallet on signup, verifiable employment records, and a path to formal recognition—without relying on slow banks or opaque references.
 
-**Core Value Proposition:**
-- **For Workers:** Portable professional credentials, verified payment history, career dignity
-- **For Employers:** Trustworthy worker verification, reduced hiring risk, transparent references
-- **For Ecosystem:** Formalization without legal burden, data-driven labor market insights
+**Judge-friendly overview:** Problem → Solution → What we built → How to run → What’s next.
 
 ---
 
-## 1. PRODUCT OVERVIEW
+## The Problem
 
-### 1.1 Problem Statement
+- **2M+ domestic workers in Kenya**, 85–90% in informal arrangements with **no standard way to prove** experience or payment history.
+- **Employers hire blind;** workers **lose reputation** every time they change jobs.
+- **Payments are opaque**—no audit trail, high fees, and slow cross-border rails when workers send money home.
 
-**Primary Problems:**
-1. **Trust Vacuum:** No standardized worker verification mechanism
-2. **Reputation Loss:** Workers cannot prove experience when changing employers
-3. **Payment Opacity:** No documentation of wages, making disputes difficult
-4. **Social Stigma:** Domestic work viewed as temporary, not professional career
-5. **Information Asymmetry:** Employers hire blind; workers have no leverage
-
-**Market Context:**
-- 2M+ domestic workers in Kenya
-- 85-90% informal arrangements
-- Legal minimum wage: 14,000 KES (rarely enforced)
-- Actual wage range: 8,000-25,000 KES
-- High turnover, zero formal documentation
-
-### 1.2 Solution Overview
-
-**Three-Pillar Architecture:**
-
-1. **Verified Identity Registry**
-   - Self-sovereign worker profiles
-   - Stellar-anchored identity proof
-   - QR code-based verification
-
-2. **Payment Documentation System**
-   - Worker-initiated logging with employer confirmation
-   - SMS-based verification workflow
-   - Blockchain audit trail
-
-3. **Reputation Engine**
-   - Multi-dimensional rating system
-   - Cryptographically signed reviews
-   - Portable across employers
-
-### 1.3 Success Metrics (Hackathon)
-
-**Technical Success:**
-- [ ] Complete user registration flow (< 3 minutes)
-- [ ] QR code generation and verification working
-- [ ] At least 1 successful Stellar transaction recorded
-- [ ] PWA installable on mobile device
-- [ ] Offline functionality operational
-
-**Demo Success:**
-- [ ] Live demonstration of full worker journey
-- [ ] Real-time QR scanning verification
-- [ ] Stellar transaction visible in explorer
-- [ ] Judges can interact with deployed app
-
-**Business Validation:**
-- [ ] 10+ demo worker profiles created
-- [ ] Clear adoption pathway articulated
-- [ ] Partnership strategy outlined
-- [ ] Revenue model defined
+Result: a **trust vacuum** that hurts both sides and keeps the sector informal.
 
 ---
 
-## 2. USER PERSONAS
+## Our Solution
 
-### 2.1 Primary Persona: Jane Wanjiku (Domestic Worker)
+**KaziChain** combines three pillars:
 
-**Demographics:**
-- Age: 28
-- Location: Kawangware, Nairobi
-- Education: Secondary school incomplete
-- Experience: 4 years childcare
-- Device: Samsung A04 (entry-level smartphone)
-- Income: 16,000 KES/month
+1. **Verified identity** — Each user gets a unique Worker ID and a **Stellar keypair** at registration. Identity and key are stored securely; secrets are encrypted in the backend.
+2. **Instant, transparent payments** — Stellar settles in **seconds** with **minimal fees**. Workers and employers can send/receive, track history, and use **scheduled payments** and **claims** (e.g. salary advances).
+3. **Inclusive access** — **Web app** (React PWA) plus **USSD** (Africa’s Talking) so users without smartphones can still create an account and get a Worker ID.
 
-**Pain Points:**
-- Has worked for 3 families, no documented proof
-- Relies on verbal references (previous employers don't always answer calls)
-- Lost job opportunity because couldn't prove experience
-- Wants professional recognition but feels stigmatized
-
-**Goals:**
-- Build verifiable work history
-- Get higher-paying jobs
-- Have proof of reliability
-- Professional identity
-
-**Technical Context:**
-- Uses WhatsApp daily
-- Uses M-Pesa for all payments
-- Limited data budget (~1GB/month)
-- Comfortable with smartphone basics, cautious with new apps
-
-### 2.2 Secondary Persona: Sarah Muthoni (Employer)
-
-**Demographics:**
-- Age: 34
-- Location: Kilimani, Nairobi
-- Occupation: Marketing manager
-- Children: 2 (ages 3 and 5)
-- Device: iPhone 13
-
-**Pain Points:**
-- Hired 3 nannies in 2 years (reliability issues)
-- Difficult to verify references
-- Worried about child safety
-- Wants trustworthy, experienced caregiver
-
-**Goals:**
-- Verify worker experience quickly
-- Access to reliable references
-- Peace of mind
-- Fair wage benchmarking
-
-**Technical Context:**
-- Heavy smartphone user
-- Comfortable with apps
-- Values convenience
-- Security-conscious
+All of this is designed to scale: same backend services power both the web and USSD flows.
 
 ---
 
-## 3. FUNCTIONAL REQUIREMENTS
+## What We Built (Demo-Ready)
 
-### 3.1 Core Features (MVP - Must Have)
+| Area | Status | Notes |
+|------|--------|------|
+| **Account creation** | ✅ | Web signup + USSD; creates Stellar keypair, stores encrypted secret, optional welcome SMS |
+| **Worker vs Employer roles** | ✅ | Role chosen at signup; separate dashboards (worker / employer) |
+| **Stellar integration** | ✅ | Keypair per user, testnet funding (Friendbot), balance API, M-Pesa on-ramp (fund with KES → KSH) |
+| **Payments** | ✅ | Send payment, payment history, deposit/withdraw flows, offramp |
+| **Schedules & claims** | ✅ | Recurring scheduled payments; workers can submit claims (e.g. advance); employer approves |
+| **Reviews** | ✅ | Submit and fetch reviews; rating aggregation; review-by-worker-ID for verification |
+| **USSD** | ✅ | Dial shortcode → Create account / Sign in; Redis-backed sessions; uses same `create_account` as web |
+| **CI/CD** | ✅ | GitHub Actions: Backend (Ruff + pytest), Frontend (ESLint + build) |
 
-#### **Feature 1: Worker Registration**
+**Frontend:** Landing page, sign up / sign in, role-based dashboard (worker vs employer), profile, fund modal, withdraw modal, and flows that call the backend APIs.
 
-**User Story:**  
-As a domestic worker, I want to create a verified profile so that I can prove my experience to potential employers.
+**Backend:** FastAPI with routes for accounts, payments, stellar (platform key, etc.), schedules, claims, and reviews; USSD handler; PostgreSQL (workers + app data); Redis (USSD sessions); Stellar SDK; Africa’s Talking (SMS/USSD).
 
-**Acceptance Criteria:**
-- [ ] Form validation: name (required), phone (required, Kenyan format)
-- [ ] Phone verification via SMS OTP (6-digit code)
-- [ ] Profile photo upload (max 2MB, JPG/PNG)
-- [ ] Skills selection (multi-select: Childcare, Cooking, Cleaning, Elderly Care)
-- [ ] Experience level (dropdown: <1yr, 1-3yr, 3-5yr, 5+yr)
-- [ ] Location (auto-detect or manual entry)
-- [ ] Generate unique Worker ID (format: NW-XXXX, alphanumeric)
-- [ ] Create Stellar keypair (stored encrypted)
-- [ ] Anchor profile hash to Stellar blockchain
-- [ ] Generate QR code containing: `{workerId, profileHash, stellarTxId}`
-- [ ] Display confirmation screen with downloadable QR card
-- [ ] Send SMS confirmation with Worker ID
+---
+
+## Tech Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Frontend** | React 19, TypeScript, Vite, React Router, Tailwind CSS |
+| **Backend** | Python 3.11, FastAPI, Uvicorn |
+| **Database** | PostgreSQL (workers, payments, schedules, reviews) |
+| **Cache** | Redis (USSD session state) |
+| **Blockchain** | Stellar (stellar-sdk): keypairs, balances, payments |
+| **SMS / USSD** | Africa’s Talking |
+| **Security** | Encrypted Stellar secrets (Fernet), optional USSD API key |
+
+---
+
+## Architecture (High Level)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Web (React PWA)  │  USSD (Africa's Talking)  │  Future: Mobile  │
+└─────────────┬───────────────────────┬───────────────────────────┘
+              │                       │
+              ▼                       ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    FastAPI Backend (routes only)                  │
+│  /health  /ussd  /api/v1/accounts  /payments  /schedules  /reviews │
+└─────────────┬─────────────────────────────────────────────────────┘
+              │
+              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Services (business logic)  →  Repositories (DB)                 │
+│  Integrations: Stellar, Africa's Talking                         │
+└─────────────┬───────────────────────┬────────────────────────────┘
+              │                       │
+              ▼                       ▼
+┌──────────────────────┐   ┌──────────────────────────────────────┐
+│  PostgreSQL          │   │  Redis (USSD sessions)                │
+│  Stellar (network)   │   │  Africa's Talking (SMS/USSD)           │
+└──────────────────────┘   └──────────────────────────────────────┘
+```
+
+- **USSD and Web** both call the same **account creation** and business logic; no duplicate Stellar or DB access in USSD.
+- **Stellar secrets** are encrypted at rest; decryption only where needed (e.g. signing payments).
+
+---
+
+## How to Run (Quick Start)
+
+### Prerequisites
+
+- **Node.js 20+** (Frontend)
+- **Python 3.11+** (Backend)
+- **PostgreSQL** and **Redis**
+- (Optional) Africa’s Talking account for SMS/USSD
+
+### 1. Backend
+
+```bash
+cd Backend
+cp .env.example .env
+# Edit .env: DATABASE_URL, REDIS_URL, ENCRYPTION_KEY; optional: AT_*, USSD_API_KEY, STELLAR_* 
+pip install -r requirements.txt
+# Create DB and run: psql -U your_user -d your_db -f schema.sql
+uvicorn app.main:app --reload --host 0.0.0.0 --port 5000
+```
+
+- **API docs:** http://localhost:5000/docs  
+- **Health:** http://localhost:5000/health  
+
+### 2. Frontend
+
+```bash
+cd Frontend
+npm install
+# Optional: set VITE_API_BASE_URL=http://localhost:5000 in .env
+npm run dev
+```
+
+- **App:** http://localhost:5173  
+
+### 3. Try the flow
+
+1. Open the app → **Create Free Account** (or **Sign In** if you already have one).
+2. Choose **Worker** or **Employer**, enter phone (and name).
+3. After signup you’re in the **Dashboard** (worker or employer view).
+4. Use **Fund** (e.g. testnet Friendbot or M-Pesa on-ramp) and **Send** to try payments.
+
+**USSD (if configured):** Dial your Africa’s Talking shortcode → Create account / Sign in; same account is created as on web.
+
+---
+
+## API Overview (What Judges Can Hit)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Health check |
+| POST | `/ussd` | Africa’s Talking USSD callback |
+| POST | `/api/v1/accounts/create` | Create account (phone, name, role) → Stellar keypair + DB |
+| POST | `/api/v1/accounts/login` | Login by phone |
+| GET | `/api/v1/accounts/{publicKey}/balance` | Stellar balances |
+| POST | `/api/v1/accounts/{publicKey}/fund` | Testnet Friendbot funding |
+| POST | `/api/v1/accounts/{publicKey}/fund-mpesa` | M-Pesa on-ramp (KES → KSH) |
+| POST | `/api/v1/send` | Send payment (Stellar) |
+| GET | `/api/v1/{publicKey}` | Payment history |
+| POST | `/api/v1/schedules` | Create scheduled payment |
+| POST | `/api/v1/claims` | Create claim (e.g. advance) |
+| POST | `/api/v1/reviews/submit` | Submit review |
+| GET | `/api/v1/reviews/for/{user_id}` | Reviews for a user |
+
+Full list and request/response shapes: **http://localhost:5000/docs** (Swagger UI).
+
+---
+
+## Repo Structure (Where to Look)
+
+```
+stellarites/
+├── README.md                 ← You are here (hackathon submission)
+├── docs/
+│   └── PRD.md                ← Full Product Requirements Document
+├── Frontend/
+│   ├── src/
+│   │   ├── pages/            ← Home, SignUp, SignIn, Dashboard, Profile, Worker/Employer dashboards
+│   │   ├── services/         ← API client (accounts, payments, reviews, session)
+│   │   └── components/       ← Navbar, Footer, FundModal, WithdrawModal
+│   └── package.json
+├── Backend/
+│   ├── app/
+│   │   ├── main.py            ← FastAPI app, CORS, /health, /ussd, router includes
+│   │   ├── routes/            ← accounts, payments, stellar, schedules, reviews
+│   │   ├── services/          ← user_service, account, payments
+│   │   ├── ussd/              ← USSD menu handler
+│   │   ├── integrations/      ← stellar (wallet), africastalking (SMS)
+│   │   └── db/                ← repositories
+│   ├── schema.sql             ← DB schema (workers, etc.)
+│   ├── docs/
+│   │   └── architecture.md   ← Backend architecture and data flow
+│   └── README.md              ← Backend setup, env, USSD flow
+└── .github/workflows/
+    └── ci.yml                 ← Lint + test (Backend + Frontend)
+```
+
+---
+
+## What’s Next (Post–Hackathon)
+
+- **PWA + offline:** Service worker and installability for low-connectivity users.
+- **QR verification:** Generate and verify QR codes linking Worker ID + Stellar account.
+- **M-Pesa deep integration:** Deposit/withdraw with real M-Pesa callbacks in production.
+- **Profile enrichment:** Skills, experience level, profile hash on Stellar for portable credentials.
+- **REST consistency:** Ensure every USSD action that needs it has a corresponding REST endpoint for the web/mobile app.
+
+---
+
+## Documentation & References
+
+- **Full PRD (personas, requirements, success metrics):** [docs/PRD.md](docs/PRD.md)
+- **Backend setup, env vars, USSD:** [Backend/README.md](Backend/README.md)
+- **Backend architecture and data flow:** [Backend/docs/architecture.md](Backend/docs/architecture.md)
+
+---
+
+## License
+
+See [LICENSE](LICENSE) in the repo (if present). Built for the Stellar hackathon.
+
+---
+
+**Thank you to the judges.** We hope KaziChain clearly demonstrates a real-world use case for Stellar: **verifiable identity and fast, low-cost payments for an underserved workforce.**
