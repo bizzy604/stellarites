@@ -66,13 +66,13 @@ export default function SignUp() {
                     <Link to="/" className="flex items-center gap-3 transition-transform hover:scale-105">
                         {/* Mobile Logo */}
                         <img
-                            alt="Paytrace Logo"
+                            alt="Kazi Chain Logo"
                             className="h-12 w-12 object-contain dark:invert md:hidden"
                             src="/logo.png"
                         />
                         {/* Desktop Logo */}
                         <img
-                            alt="Paytrace Logo"
+                            alt="Kazi Chain Logo"
                             className="h-16 w-48 object-contain dark:invert hidden md:block"
                             src="/logo1.png"
                         />
@@ -188,7 +188,7 @@ export default function SignUp() {
                         <span className="material-icons-outlined text-sm">shield</span>
                         <span>Secured by Stellar Network</span>
                     </div>
-                    <p className="text-xs text-subtext-light dark:text-subtext-dark opacity-50">© 2026 Paytrace Inc.</p>
+                    <p className="text-xs text-subtext-light dark:text-subtext-dark opacity-50">© 2026 Kazi Chain Inc.</p>
                 </div>
             </main>
 

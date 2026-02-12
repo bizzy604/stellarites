@@ -60,13 +60,13 @@ export default function SignIn() {
                     <Link to="/" className="flex items-center gap-3 transition-transform hover:scale-105">
                         {/* Mobile Logo */}
                         <img
-                            alt="Paytrace Logo"
+                            alt="Kazi Chain Logo"
                             className="h-12 w-12 object-contain dark:invert md:hidden"
                             src="/logo.png"
                         />
                         {/* Desktop Logo */}
                         <img
-                            alt="Paytrace Logo"
+                            alt="Kazi Chain Logo"
                             className="h-16 w-48 object-contain dark:invert hidden md:block"
                             src="/logo1.png"
                         />
@@ -76,7 +76,7 @@ export default function SignIn() {
                     <div className="pt-10 pb-6 px-8 text-center">
                         <h1 className="text-2xl font-bold text-text-light dark:text-text-dark mb-2">Sign in to your account</h1>
                         <p className="text-subtext-light dark:text-subtext-dark text-sm">
-                            Welcome back to Paytrace.
+                            Welcome back to Kazi Chain.
                         </p>
                     </div>
 
@@ -185,7 +185,7 @@ export default function SignIn() {
                         <span className="material-icons-outlined text-sm">shield</span>
                         <span>Secured by Stellar Network</span>
                     </div>
-                    <p className="text-xs text-subtext-light dark:text-subtext-dark opacity-50">© 2026 Paytrace Inc.</p>
+                    <p className="text-xs text-subtext-light dark:text-subtext-dark opacity-50">© 2026 Kazi Chain Inc.</p>
                 </div>
             </main>
 

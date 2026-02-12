@@ -66,7 +66,7 @@ export default function Home() {
                                 <span className="text-primary bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-600">modern workforce</span>
                             </h1>
                             <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed max-w-xl">
-                                Paytrace leverages blockchain technology to provide instant, low-cost, and transparent cross-border payments for domestic workers and employers worldwide.
+                                KaziChain leverages blockchain technology to provide instant, low-cost, and transparent cross-border payments for domestic workers and employers worldwide.
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-4 pt-4">

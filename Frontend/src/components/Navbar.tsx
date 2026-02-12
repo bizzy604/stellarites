@@ -89,8 +89,8 @@ export default function Navbar() {
                         <div className="flex-shrink-0 flex items-center gap-3">
                             <Link to="/" className="flex items-center gap-3">
                                 <div className="h-16 w-16 md:w-40 text-text-light dark:text-white">
-                                    <img alt="Paytrace Logo" className="h-full w-full object-contain dark:invert md:hidden" src="/logo.png" />
-                                    <img alt="Paytrace Logo" className="h-full w-full object-contain dark:invert hidden md:block" src="/logo1.png" />
+                                    <img alt="KaziChain Logo" className="h-full w-full object-contain dark:invert md:hidden" src="/KAzi Chain.png" />
+                                    <img alt="KaziChain Logo" className="h-full w-full object-contain dark:invert hidden md:block" src="/KAzi Chain.png" />
                                 </div>
                             </Link>
                         </div>
