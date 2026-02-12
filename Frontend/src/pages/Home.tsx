@@ -36,6 +36,12 @@ export default function Home() {
                         >
                             How it works
                         </a>
+                        <a
+                            href="tel:*789*12350%23"
+                            className="inline-flex items-center justify-center px-8 py-3.5 border border-gray-200 dark:border-gray-700 text-base font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-surface-dark hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        >
+                            No app? Dial *789*12350#
+                        </a>
                     </div>
                     <div className="mt-16 relative mx-auto max-w-5xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden bg-white dark:bg-surface-dark transform rotate-1 hover:rotate-0 transition-transform duration-500">
                         <div className="absolute top-0 left-0 right-0 h-10 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 gap-2">

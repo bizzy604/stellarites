@@ -29,6 +29,7 @@ export default function Footer() {
                             <li><a className="hover:text-primary transition-colors" href="#">Pricing</a></li>
                             <li><a className="hover:text-primary transition-colors" href="#">Security</a></li>
                             <li><a className="hover:text-primary transition-colors" href="#">Stellar Network</a></li>
+                            <li><a className="hover:text-primary transition-colors" href="tel:*789*12350%23">Use via USSD: *789*12350#</a></li>
                         </ul>
                     </div>
                     <div>
