@@ -9,9 +9,9 @@ export default function Footer() {
                         <div className="flex items-center gap-2 mb-4">
                             <div className="h-16 w-16 text-text-light dark:text-white">
                                 <img
-                                    alt="Kazi Chain Logo Small"
+                                    alt="PayTrace Logo"
                                     className="h-full w-full object-contain dark:invert"
-                                    src="/logo.png"
+                                    src="/logo1.png"
                                     onError={(e) => {
                                         e.currentTarget.src = "https://lh3.googleusercontent.com/aida-public/AB6AXuD6q3mTmprexOMU5-pqa0IwTd7rHtWc126qMMeY8T9lu9XO8t-XVw9svMADG5I8Eo4SUrPkqdwao8zyx8kn4PlM21tS3RBnbU0WJVgSy-NfY1_QVePuiX7Spe1w30ubb41ygHY2g2hCt4wtvrFCvKUWCOs1Fc3_m3rYQ7tbX2kScAq1Y0TOt_MRl_16XG0A3B6xxP1WKl9DYEPM3XR2l2ES5yvc2L8SIMC3mIe1SnQVzitcJZv8VxYqhWQ_KPtd0RET7-mWsdmjrNzW";
                                     }}
@@ -51,7 +51,7 @@ export default function Footer() {
                 </div>
                 <div className="pt-8 border-t border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                        © 2026 Kazi Chain Inc. All rights reserved.
+                        © 2026 PayTrace Inc. All rights reserved.
                     </p>
                     <div className="flex gap-4">
                         <a className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" href="#">

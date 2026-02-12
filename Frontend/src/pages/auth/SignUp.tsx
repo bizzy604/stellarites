@@ -188,7 +188,7 @@ export default function SignUp() {
                         <span className="material-icons-outlined text-sm">shield</span>
                         <span>Secured by Stellar Network</span>
                     </div>
-                    <p className="text-xs text-subtext-light dark:text-subtext-dark opacity-50">© 2026 Kazi Chain Inc.</p>
+                    <p className="text-xs text-subtext-light dark:text-subtext-dark opacity-50">© 2026 PayTrace Inc.</p>
                 </div>
             </main>
 

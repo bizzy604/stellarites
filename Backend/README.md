@@ -1,6 +1,6 @@
-# NannyChain Backend — Team Onboarding
+# PayTrace Backend — Team Onboarding
 
-Welcome to the **NannyChain Unified Backend API**, the core backend powering:
+Welcome to the **PayTrace Unified Backend API**, the core backend powering:
 
 - Web Application (React PWA)
 - **USSD Interface (Africa's Talking)** — implemented
