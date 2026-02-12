@@ -88,9 +88,9 @@ export default function Navbar() {
                     <div className="flex justify-between h-20 items-center">
                         <div className="flex-shrink-0 flex items-center gap-3">
                             <Link to="/" className="flex items-center gap-3">
-                                <div className="h-16 w-16 md:w-40 text-text-light dark:text-white">
+                                <div className="h-24 w-24 md:w-64 text-text-light dark:text-white">
                                     <img alt="KaziChain Logo" className="h-full w-full object-contain dark:invert md:hidden" src="/logo1.png" />
-                                    <img alt="PayTrace Logo" className="h-full w-full object-contain dark:invert hidden md:block" src="/logo1.png" />
+                                    <img alt="KaziChain Logo" className="h-full w-full object-contain dark:invert hidden md:block" src="/logo1.png" />
                                 </div>
                             </Link>
                         </div>

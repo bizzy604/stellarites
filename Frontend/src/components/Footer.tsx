@@ -7,9 +7,9 @@ export default function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
                     <div className="col-span-1 md:col-span-1">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="h-16 w-16 text-text-light dark:text-white">
+                            <div className="h-24 w-24 text-text-light dark:text-white">
                                 <img
-                                    alt="PayTrace Logo"
+                                    alt="KaziChain Logo"
                                     className="h-full w-full object-contain dark:invert"
                                     src="/logo1.png"
                                     onError={(e) => {
@@ -51,7 +51,7 @@ export default function Footer() {
                 </div>
                 <div className="pt-8 border-t border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                        © 2026 PayTrace Inc. All rights reserved.
+                        © 2026 KaziChain Inc. All rights reserved.
                     </p>
                     <div className="flex gap-4">
                         <a className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" href="#">
