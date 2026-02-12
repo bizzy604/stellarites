@@ -1,16 +1,18 @@
 # PRODUCT REQUIREMENTS DOCUMENT (PRD)
-## NannyChain: Verified Work History Platform for Domestic Workers
+## PayTrace: Verified Work History Platform for Domestic Workers
 
 **Version:** 1.0  
 **Date:** January 22, 2026  
 **Project Duration:** 48 hours (Hackathon MVP)  
-**Tech Stack:** React (Frontend) + Python/Flask (Backend) + PostgreSQL + Stellar
+**Tech Stack:** React (Frontend) + Python/FastAPI (Backend) + PostgreSQL + Stellar
+
+**Implementation status:** Backend (USSD, Africa's Talking, Stellar wallet mapping on signup) and setup are documented in [`Backend/README.md`](Backend/README.md). Architecture and data flow are in [`Backend/docs/architecture.md`](Backend/docs/architecture.md).
 
 ---
 
 ## EXECUTIVE SUMMARY
 
-NannyChain is a Progressive Web Application (PWA) that creates portable, verifiable work histories for domestic workers in Kenya, anchored on Stellar blockchain for immutability. The platform addresses trust asymmetry between employers and workers by providing cryptographically verifiable employment records, payment documentation, and reputation scoring.
+PayTrace is a Progressive Web Application (PWA) that creates portable, verifiable work histories for domestic workers in Kenya, anchored on Stellar blockchain for immutability. The platform addresses trust asymmetry between employers and workers by providing cryptographically verifiable employment records, payment documentation, and reputation scoring.
 
 **Core Value Proposition:**
 - **For Workers:** Portable professional credentials, verified payment history, career dignity

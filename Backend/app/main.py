@@ -1,10 +1,130 @@
-from flask import Flask, jsonify
+from contextlib import asynccontextmanager
+import asyncio
+import logging
 
-app = Flask(__name__)
+from fastapi import FastAPI, Form, Header
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, PlainTextResponse
 
-@app.route('/health', methods=['GET'])
+from app.config import Config
+from app.api.v1.reviews import router as reviews_router # Import the new router
+from app.routes.payments import router as payments_router  # Import payments router
+from app.routes.accounts import router as accounts_router  # Import accounts router
+from app.routes.stellar import router as stellar_router  # Import stellar router
+from app.routes.schedules import router as schedules_router  # Import schedules router
+from app.routes.reviews import router as user_reviews_router  # Import user reviews router
+
+logger = logging.getLogger(__name__)
+
+SCHEDULER_INTERVAL_SECONDS = 60  # check for due payments every 60 s
+
+
+async def _scheduled_payments_loop():
+    """Background loop: execute due scheduled payments every SCHEDULER_INTERVAL_SECONDS."""
+    from app.services.payments import get_payment_service
+    from app.routes.schedules import _run_due_payments
+
+    while True:
+        await asyncio.sleep(SCHEDULER_INTERVAL_SECONDS)
+        try:
+            ps = get_payment_service()
+            result = _run_due_payments(ps)
+            if result["executed"] or result["failed"]:
+                logger.info(
+                    "Scheduled-payments run: executed=%s failed=%s",
+                    result["executed"],
+                    result["failed"],
+                )
+        except Exception:
+            logger.exception("Scheduled-payments background task error")
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    """Startup / shutdown lifecycle."""
+    task = asyncio.create_task(_scheduled_payments_loop())
+    logger.info("Background scheduler started (interval=%ss)", SCHEDULER_INTERVAL_SECONDS)
+    yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+
+app = FastAPI(
+    title="NannyChain API",
+    description="Backend for NannyChain: USSD, Stellar wallet mapping, Africa's Talking.",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+# CORS – allow the frontend dev server and production origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "https://stellarites.vercel.app",
+        "https://stellarites.onrender.com"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include API routers
+app.include_router(reviews_router, prefix="/api/v1", tags=["Reviews"])
+app.include_router(payments_router, prefix="/api/v1", tags=["Payments"])
+app.include_router(accounts_router, prefix="/api/v1", tags=["Accounts"])
+app.include_router(stellar_router, prefix="/api/v1", tags=["Stellar"])
+app.include_router(schedules_router, prefix="/api/v1", tags=["Schedules & Claims"])
+app.include_router(user_reviews_router, prefix="/api/v1", tags=["User Reviews"])
+
+USSD_API_KEY = Config.USSD_API_KEY or None
+
+
+@app.get("/health")
 def health():
-    return jsonify({'status': 'ok'})
+    """
+    Provide a health-check response for the service.
+    
+    Returns:
+        JSONResponse: A JSON response with content {"status": "ok"} indicating the service is healthy.
+    """
+    return JSONResponse(content={"status": "ok"})
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+
+@app.post("/ussd", response_class=PlainTextResponse)
+def ussd(
+    sessionId: str = Form(""),
+    phoneNumber: str = Form(""),
+    text: str = Form(""),
+    authorization: str | None = Header(None),
+):
+    """
+    Handle Africa's Talking USSD callback and return the USSD response as plain text.
+    
+    Parameters:
+        sessionId (str): USSD session identifier supplied by the gateway.
+        phoneNumber (str): Caller phone number as provided by the gateway.
+        text (str): Text payload representing the user's current USSD input.
+        authorization (str | None): Optional `Authorization` header value; when `USSD_API_KEY` is set this is validated before processing.
+    
+    Returns:
+        PlainTextResponse: The USSD response text to send back to the gateway, or an empty body with status code 403 when authorization fails.
+    """
+    if USSD_API_KEY:
+        token = (authorization or "").replace("Bearer ", "").strip()
+        if token != USSD_API_KEY:
+            return PlainTextResponse(content="", status_code=403)
+
+    from app.ussd.handler import handle_ussd
+    response_text = handle_ussd(sessionId, phoneNumber, text)
+    return PlainTextResponse(content=response_text)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=5000, reload=False)

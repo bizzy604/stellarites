@@ -1,0 +1,65 @@
+services:
+  - type: web
+    name: nannychain-backend
+    runtime: python3
+    pythonVersion: 3.11
+    buildCommand: |
+      set -e
+      export CARGO_HOME="/tmp/cargo"
+      export RUSTUP_HOME="/tmp/rustup"
+      export CARGO_TARGET_DIR="/tmp/cargo-target"
+      mkdir -p "$CARGO_HOME" "$RUSTUP_HOME" "$CARGO_TARGET_DIR"
+      export PATH="$CARGO_HOME/bin:$PATH"
+      if ! command -v rustc >/dev/null 2>&1; then
+        curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path
+        export PATH="$CARGO_HOME/bin:$PATH"
+        rustup default stable
+      fi
+      pip install --upgrade pip
+      pip install maturin
+      pip install --prefer-binary -r requirements.txt
+    startCommand: "python run.py"
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: STELLAR_NETWORK
+        sync: false
+      - key: STELLAR_FUNDING_SECRET
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: AT_USERNAME
+        sync: false
+      - key: AT_API_KEY
+        sync: false
+      - key: USSD_API_KEY
+        sync: false
+      - key: USSD_SESSION_TTL
+        sync: false
+      - key: PINATA_API_KEY
+        sync: false
+      - key: PINATA_SECRET_KEY
+        sync: false
+      - key: PINATA_GATEWAY
+        sync: false
+      - key: REVIEW_UNLOCK_DAYS
+        sync: false
+      - key: REVIEW_LINK_EXPIRY_DAYS
+        sync: false
+      - key: REVIEW_FRONTEND_URL
+        sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        sync: false
+      - key: CARGO_HOME
+        value: /tmp/cargo
+        sync: false
+      - key: RUSTUP_HOME
+        value: /tmp/rustup
+        sync: false
+      - key: CARGO_TARGET_DIR
+        value: /tmp/cargo-target
+        sync: false
